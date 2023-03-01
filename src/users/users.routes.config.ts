@@ -1,4 +1,6 @@
 import express from 'express';
+import { body } from 'express-validator';
+import bodyValidationMiddleware from '../common/middleware/body.validation.middleware';
 
 import { CommonRoutesConfig } from '../common/common.routes.config';
 import usersController from './controllers/users.controller';
@@ -14,7 +16,11 @@ export class UsersRoutes extends CommonRoutesConfig {
       .route('/users')
       .get(usersController.listUsers)
       .post(
-        usersMiddleware.validateRequiredUserBodyFields,
+        body('email').isEmail(),
+        body('password')
+          .isLength({ min: 5 })
+          .withMessage('Must include password (5+ characters)'),
+        bodyValidationMiddleware.verifyBodyFieldsError,
         usersMiddleware.validateSameEmailDoesntExist,
         usersController.createUser
       );
@@ -28,12 +34,28 @@ export class UsersRoutes extends CommonRoutesConfig {
       .delete(usersController.removeUser);
 
     this.app.put('/users/:userId', [
-      usersMiddleware.validateRequiredUserBodyFields,
+      body('email').isEmail(),
+      body('password')
+        .isLength({ min: 5 })
+        .withMessage('Must include password (5+ characters)'),
+      body('firstName').isString(),
+      body('lastName').isString(),
+      body('permissionFlags').isInt(),
+      bodyValidationMiddleware.verifyBodyFieldsError,
       usersMiddleware.validateSameEmailBelongToSameUser,
       usersController.put,
     ]);
 
     this.app.patch('/users/:userId', [
+      body('email').isEmail().optional(),
+      body('password')
+        .isLength({ min: 5 })
+        .withMessage('Password must be 5+ characters')
+        .optional(),
+      body('firstName').isString().optional(),
+      body('lastName').isString().optional(),
+      body('permissionFlags').isInt().optional(),
+      bodyValidationMiddleware.verifyBodyFieldsError,
       usersMiddleware.validatePatchEmail,
       usersController.patch,
     ]);
