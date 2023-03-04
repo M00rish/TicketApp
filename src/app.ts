@@ -5,15 +5,22 @@ import winston from 'winston';
 import expressWinston from 'express-winston';
 import cors from 'cors';
 import debug from 'debug';
+import dotenv from 'dotenv';
 
 import { CommonRoutesConfig } from './common/common.routes.config';
 import { UsersRoutes } from './users/users.routes.config';
+import { AuthRoutes } from './auth/auth.routes.config';
 
 const app: express.Application = express();
 const server: http.Server = http.createServer(app);
 const port = 3000;
 const routes: Array<CommonRoutesConfig> = [];
-const debugLog: debug.IDebugger = debug('app');
+const log: debug.IDebugger = debug('app');
+
+const dotenvResults = dotenv.config();
+if (dotenvResults.error) {
+  throw dotenvResults.error;
+}
 
 app.use(express.json());
 
@@ -35,6 +42,7 @@ if (!process.env.DEBUG) {
 app.use(expressWinston.logger(loggerOptions));
 
 routes.push(new UsersRoutes(app));
+routes.push(new AuthRoutes(app));
 
 const startingMessage = `server is running on ${port}`;
 app.get('/', (req: express.Request, res: express.Response) => {
@@ -43,8 +51,7 @@ app.get('/', (req: express.Request, res: express.Response) => {
 
 server.listen(port, () => {
   routes.forEach((route: CommonRoutesConfig) => {
-    debugLog(`Routes configured ${route.getName()}`);
-
-    console.log(startingMessage);
+    log(`Routes configured ${route.getName()}`);
   });
+  console.log(startingMessage);
 });

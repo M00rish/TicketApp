@@ -54,6 +54,13 @@ class UsersDao {
     return await this.User.deleteOne({ _id: userId }).exec();
   }
 
+  async getUserByEmailWithPassword(email: string) {
+    const user = await this.User.findOne({ email: email })
+      .select('_id email permissionFlags +password')
+      .exec();
+    return user;
+  }
+
   schema = mongooseService.getMongoose().Schema;
 
   userSchema = new this.schema(
