@@ -5,6 +5,9 @@ import bodyValidationMiddleware from '../common/middleware/body.validation.middl
 import { CommonRoutesConfig } from '../common/common.routes.config';
 import usersController from './controllers/users.controller';
 import usersMiddleware from './middleware/users.middleware';
+import jwtMiddleware from '../auth/middleware/jwt.middleware';
+import permissionMiddleware from '../common/middleware/common.permission.middleware';
+import { permissionsFlags } from '../common/middleware/common.permissionflag.enum';
 
 export class UsersRoutes extends CommonRoutesConfig {
   constructor(app: express.Application) {
@@ -14,7 +17,11 @@ export class UsersRoutes extends CommonRoutesConfig {
   configureRoutes(): express.Application {
     this.app
       .route('/users')
-      .get(usersController.listUsers)
+      .get(
+        jwtMiddleware.validJwtNeeded,
+        permissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
+        usersController.listUsers
+      )
       .post(
         body('email').isEmail(),
         body('password')
@@ -29,11 +36,16 @@ export class UsersRoutes extends CommonRoutesConfig {
 
     this.app
       .route('/users/:userId')
-      .all(usersMiddleware.validateUserExists)
+      .all(
+        usersMiddleware.validateUserExists,
+        jwtMiddleware.validJwtNeeded,
+        permissionMiddleware.onlySameUserOrAdminCanAccess
+      )
       .get(usersController.getUserById)
       .delete(usersController.removeUser);
 
     this.app.put('/users/:userId', [
+      permissionMiddleware.onlySameUserOrAdminCanAccess,
       body('email').isEmail(),
       body('password')
         .isLength({ min: 5 })
@@ -43,10 +55,12 @@ export class UsersRoutes extends CommonRoutesConfig {
       body('permissionFlags').isInt(),
       bodyValidationMiddleware.verifyBodyFieldsError,
       usersMiddleware.validateSameEmailBelongToSameUser,
+      usersMiddleware.userCannotChangePermission,
       usersController.put,
     ]);
 
     this.app.patch('/users/:userId', [
+      permissionMiddleware.onlySameUserOrAdminCanAccess,
       body('email').isEmail().optional(),
       body('password')
         .isLength({ min: 5 })
@@ -57,6 +71,7 @@ export class UsersRoutes extends CommonRoutesConfig {
       body('permissionFlags').isInt().optional(),
       bodyValidationMiddleware.verifyBodyFieldsError,
       usersMiddleware.validatePatchEmail,
+      usersMiddleware.userCannotChangePermission,
       usersController.patch,
     ]);
 

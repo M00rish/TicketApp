@@ -15,8 +15,6 @@ class AuthMiddlware {
       req.body.email
     );
 
-    log(user);
-
     if (user) {
       const hashPassowrd = user.password;
       if (await argon.verify(hashPassowrd, req.body.password)) {
