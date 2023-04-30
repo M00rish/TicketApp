@@ -1,7 +1,8 @@
 import express from 'express';
-import * as argon from 'argon2';
-import usersService from '../../users/services/users.service';
 import debug from 'debug';
+import bcrypt from 'bcryptjs';
+
+import usersService from '../../users/services/users.service';
 
 const log: debug.IDebugger = debug('app:Auth-Middlware');
 
@@ -17,7 +18,8 @@ class AuthMiddlware {
 
     if (user) {
       const hashPassowrd = user.password;
-      if (await argon.verify(hashPassowrd, req.body.password)) {
+
+      if (bcrypt.compareSync(req.body.password, hashPassowrd)) {
         req.body = {
           userId: user._id,
           email: user.email,

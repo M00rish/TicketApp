@@ -1,15 +1,14 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import debug from 'debug';
+import rateLimit from 'express-rate-limit';
 
 import usersService from '../../users/services/users.service';
-import { Jwt } from '../../common/types/jwt';
 
 const log: debug.IDebugger = debug('app:Jwt-Middlware');
 
 class JwtMiddleware {
-  validJwtNeeded(
+  checkValidToken(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
@@ -22,12 +21,13 @@ class JwtMiddleware {
         } else {
           res.locals.jwt = jwt.verify(
             authorization[1],
-            process.env.JWT_SECRET
-          ) as Jwt;
+            process.env.ACCESS_SECRET
+          );
+
           next();
         }
       } catch (err) {
-        log(err);
+        log('checkValidToken error: %O', err);
         return res.status(403).send();
       }
     } else {
@@ -35,47 +35,40 @@ class JwtMiddleware {
     }
   }
 
-  verfiyRefreshBodyField(
+  async checkValidRefreshToken(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
-    if (req.body && req.body.refreshToken) {
-      return next();
-    } else {
-      return res
-        .status(400)
-        .send({ errors: ['Missing required field: refresh Token'] });
+    try {
+      const refreshToken = req.headers['cookie']?.split(';')[0].split('=')[1];
+
+      if (
+        refreshToken &&
+        jwt.verify(refreshToken, process.env.REFRESH_SECRET)
+      ) {
+        // check if a rfresh token exists on the user object in the database
+        // log(req.cookies);
+        // req.body = {
+        //   userId: user._id,
+        //   email: user.email,
+        //   permissionFlags: user.permissionFlags,
+        // };
+        return next();
+      } else {
+        return res.status(400).send({ errors: ['Invalid refresh token'] });
+      }
+    } catch (err) {
+      log('checkValidRefreshToken error: %O', err);
+      return res.status(403).send();
     }
   }
 
-  async validRefreshNeeded(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) {
-    const user: any = await usersService.getUserByEmailWithPassword(
-      res.locals.jwt.email
-    );
-    const salt = crypto.createSecretKey(
-      Buffer.from(res.locals.jwt.refreshkey.data)
-    );
-    const hash = crypto
-      .createHmac('sha512', salt)
-      .update(res.locals.jwt.userId + process.env.JWT_SECRET)
-      .digest('base64');
-
-    if (hash === req.body.refreshToken) {
-      req.body = {
-        userId: user._id,
-        email: user.email,
-        permissionFlags: user.permissionFlags,
-      };
-      return next();
-    } else {
-      return res.status(400).send({ errors: ['Invalid refresh token'] });
-    }
-  }
+  rateLimitRefreshTokenRequests = rateLimit({
+    windowMs: 3 * 24 * 60 * 60 * 1000,
+    max: 1,
+    message: 'Too many requests, please try again later',
+  });
 }
 
 export default new JwtMiddleware();

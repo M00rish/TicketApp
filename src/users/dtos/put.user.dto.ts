@@ -4,4 +4,5 @@ export interface PutUserDto {
   FirstName: string;
   lastName: string;
   permissionFlag: string;
+  refreshToken: string;
 }

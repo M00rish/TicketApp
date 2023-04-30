@@ -36,6 +36,14 @@ class UserService implements CRUD {
   async getUserByEmailWithPassword(email: string) {
     return UsersDao.getUserByEmailWithPassword(email);
   }
+
+  async getUserRefeshTokenById(id: string) {
+    return UsersDao.getUserRefreshTokenById(id);
+  }
+
+  async updateUserRefreshTokenById(id: string, refreshToken: string) {
+    UsersDao.updateUserRefreshTokenById(id, refreshToken);
+  }
 }
 
 export default new UserService();

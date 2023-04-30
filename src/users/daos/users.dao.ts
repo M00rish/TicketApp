@@ -62,6 +62,21 @@ class UsersDao {
     return user;
   }
 
+  async getUserRefreshTokenById(userId: string) {
+    const refreshToken = await this.User.findOne({ _id: userId })
+      .select('refreshToken')
+      .exec();
+    return refreshToken;
+  }
+
+  async updateUserRefreshTokenById(userId: string, refreshToken: string) {
+    await this.User.findOneAndUpdate(
+      { _id: userId },
+      { refreshToken },
+      { new: true }
+    ).exec();
+  }
+
   schema = mongooseService.getMongoose().Schema;
 
   userSchema = new this.schema(
@@ -72,6 +87,7 @@ class UsersDao {
       firstName: String,
       lastName: String,
       permessionFlags: Number,
+      refreshToken: String,
     },
     { id: false }
   );

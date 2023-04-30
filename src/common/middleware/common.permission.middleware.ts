@@ -17,7 +17,7 @@ class permissionMiddleware {
         if (requiredPermissionFlags & userPermissionFlag) {
           next();
         } else {
-          res.status(403).send();
+          res.status(403).send({ error: 'Permission denied' });
         }
       } catch (err) {
         log(err);

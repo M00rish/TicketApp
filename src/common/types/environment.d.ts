@@ -3,8 +3,10 @@ export {};
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      JWT_SECRET: string;
-      TOKEN_EXPERITION_INSECONDS: number;
+      ACCESS_SECRET: string;
+      REFRESH_SECRET: string;
+      ACCESS_TOKEN_LIFE: number | string;
+      REFRESH_TOKEN_LIFE: number | string;
       ENV: 'test' | 'dev' | 'prod';
     }
   }

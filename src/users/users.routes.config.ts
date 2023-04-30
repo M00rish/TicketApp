@@ -1,7 +1,7 @@
 import express from 'express';
 import { body } from 'express-validator';
-import bodyValidationMiddleware from '../common/middleware/body.validation.middleware';
 
+import bodyValidationMiddleware from '../common/middleware/body.validation.middleware';
 import { CommonRoutesConfig } from '../common/common.routes.config';
 import usersController from './controllers/users.controller';
 import usersMiddleware from './middleware/users.middleware';
@@ -18,7 +18,7 @@ export class UsersRoutes extends CommonRoutesConfig {
     this.app
       .route('/users')
       .get(
-        jwtMiddleware.validJwtNeeded,
+        jwtMiddleware.checkValidToken,
         permissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
         usersController.listUsers
       )
@@ -38,14 +38,13 @@ export class UsersRoutes extends CommonRoutesConfig {
       .route('/users/:userId')
       .all(
         usersMiddleware.validateUserExists,
-        jwtMiddleware.validJwtNeeded,
+        jwtMiddleware.checkValidToken,
         permissionMiddleware.onlySameUserOrAdminCanAccess
       )
       .get(usersController.getUserById)
       .delete(usersController.removeUser);
 
     this.app.put('/users/:userId', [
-      permissionMiddleware.onlySameUserOrAdminCanAccess,
       body('email').isEmail(),
       body('password')
         .isLength({ min: 5 })
@@ -60,7 +59,6 @@ export class UsersRoutes extends CommonRoutesConfig {
     ]);
 
     this.app.patch('/users/:userId', [
-      permissionMiddleware.onlySameUserOrAdminCanAccess,
       body('email').isEmail().optional(),
       body('password')
         .isLength({ min: 5 })
