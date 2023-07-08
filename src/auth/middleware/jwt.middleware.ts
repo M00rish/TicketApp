@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import debug from 'debug';
 import rateLimit from 'express-rate-limit';
 
-import usersService from '../../users/services/users.service';
+import { Jwt } from '../../common/types/jwt';
 
 const log: debug.IDebugger = debug('app:Jwt-Middlware');
 
@@ -22,7 +22,7 @@ class JwtMiddleware {
           res.locals.jwt = jwt.verify(
             authorization[1],
             process.env.ACCESS_SECRET
-          );
+          ) as Jwt;
 
           next();
         }
@@ -47,13 +47,7 @@ class JwtMiddleware {
         refreshToken &&
         jwt.verify(refreshToken, process.env.REFRESH_SECRET)
       ) {
-        // check if a rfresh token exists on the user object in the database
-        // log(req.cookies);
-        // req.body = {
-        //   userId: user._id,
-        //   email: user.email,
-        //   permissionFlags: user.permissionFlags,
-        // };
+        log(req.headers['cookie']);
         return next();
       } else {
         return res.status(400).send({ errors: ['Invalid refresh token'] });
@@ -65,7 +59,7 @@ class JwtMiddleware {
   }
 
   rateLimitRefreshTokenRequests = rateLimit({
-    windowMs: 3 * 24 * 60 * 60 * 1000,
+    windowMs: 15 * 24 * 60 * 60 * 1000,
     max: 1,
     message: 'Too many requests, please try again later',
   });

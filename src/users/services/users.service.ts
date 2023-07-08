@@ -25,10 +25,6 @@ class UserService implements CRUD {
     return UsersDao.getUserById(id);
   }
 
-  async putById(id: string, resource: PutUserDto) {
-    return UsersDao.updateUserById(id, resource);
-  }
-
   async getUserByEmail(email: string) {
     return UsersDao.getUserByEmail(email);
   }

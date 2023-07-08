@@ -3,6 +3,6 @@ export interface PutUserDto {
   password: string;
   FirstName: string;
   lastName: string;
-  permissionFlag: string;
+  permissionFlags: string;
   refreshToken: string;
 }

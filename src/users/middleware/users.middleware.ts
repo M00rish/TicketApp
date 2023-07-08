@@ -1,6 +1,7 @@
 import express from 'express';
 import debug from 'debug';
 import userService from '../services/users.service';
+import usersService from '../services/users.service';
 
 const log: debug.IDebugger = debug('app:users-controller');
 
@@ -10,7 +11,9 @@ class UsersMiddleware {
     res: express.Response,
     next: express.NextFunction
   ) {
+    log('validateSameEmailDoesntExist');
     const user = await userService.getUserByEmail(req.body.email);
+    log('user', user);
     if (!user) {
       next();
     } else {
@@ -75,9 +78,14 @@ class UsersMiddleware {
   ) {
     if (
       'permissionFlags' in req.body &&
-      req.body.permessionFlags != res.locals.user.permessionFlags
+      req.body.permissionFlags != res.locals.jwt.permissionFlags
     ) {
-      res.status(400).send('user cannot change permission levels');
+      if (res.locals.jwt.permissionFlags < 4) {
+        return res.status(403).send('user cannot change permission levels');
+      }
+      usersService.patchById(res.locals.user._id, {
+        permissionFlags: req.body.permissionFlags,
+      });
     } else {
       next();
     }

@@ -21,7 +21,7 @@ class UsersController {
     req.body.password = bcrypt.hashSync(req.body.password, 10);
 
     const UserId = await usersService.create(req.body);
-    res.status(200).send({ id: UserId });
+    res.status(201).send({ _id: UserId });
   }
 
   async patch(req: express.Request, res: express.Response) {
@@ -30,17 +30,16 @@ class UsersController {
     }
 
     const UserId = await usersService.patchById(req.body.id, req.body);
-    res.status(204).send();
-  }
-
-  async put(req: express.Request, res: express.Response) {
-    req.body.password = bcrypt.hashSync(req.body.password, 10);
-    usersService.putById(req.body.id, req.body);
-    res.status(204).send();
+    res.status(204).send(UserId);
   }
 
   async removeUser(req: express.Request, res: express.Response) {
     log(await usersService.deleteById(req.body.id));
+    res.status(204).send();
+  }
+
+  async pathchPermissionFlags(req: express.Request, res: express.Response) {
+    log(await usersService.patchById(req.body.id, req.body));
     res.status(204).send();
   }
 }

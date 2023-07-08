@@ -6,3 +6,10 @@ services:
       - ./data:/data/db
     ports:
       - '27017:27017'
+
+  mongo-test:
+    image: mongo
+    volumes:
+      - ./data-test:/data/db
+    ports:
+      - '27018:27017'

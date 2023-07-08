@@ -2,7 +2,8 @@
   "scripts": {
     "start": "tsc && node --unhandled-rejections=strict ./dist/app.js",
     "debug": "export DEBUG=* && npm run start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --require ts-node/register --require source-map-support/register ./test/**/*.ts",
+    "test:debug": "export DEBUG=* && npm run test"
   },
   "dependencies": {
     "argon2": "^0.30.3",
@@ -22,14 +23,20 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
+    "@types/chai": "^4.3.5",
     "@types/cors": "^2.8.13",
     "@types/debug": "^4.1.7",
     "@types/express": "^4.17.17",
     "@types/jsonwebtoken": "^9.0.1",
+    "@types/mocha": "^10.0.1",
     "@types/node": "^18.15.3",
     "@types/shortid": "^0.0.29",
+    "@types/supertest": "^2.0.12",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
     "nodemon": "^2.0.20",
     "source-map-support": "^0.5.21",
+    "supertest": "^6.3.3",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.5"
   }

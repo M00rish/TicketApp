@@ -22,7 +22,6 @@ class AuthMiddlware {
       if (bcrypt.compareSync(req.body.password, hashPassowrd)) {
         req.body = {
           userId: user._id,
-          email: user.email,
           permissionFlags: user.permissionFlags,
         };
         return next();

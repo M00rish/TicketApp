@@ -44,20 +44,6 @@ export class UsersRoutes extends CommonRoutesConfig {
       .get(usersController.getUserById)
       .delete(usersController.removeUser);
 
-    this.app.put('/users/:userId', [
-      body('email').isEmail(),
-      body('password')
-        .isLength({ min: 5 })
-        .withMessage('Must include password (5+ characters)'),
-      body('firstName').isString(),
-      body('lastName').isString(),
-      body('permissionFlags').isInt(),
-      bodyValidationMiddleware.verifyBodyFieldsError,
-      usersMiddleware.validateSameEmailBelongToSameUser,
-      usersMiddleware.userCannotChangePermission,
-      usersController.put,
-    ]);
-
     this.app.patch('/users/:userId', [
       body('email').isEmail().optional(),
       body('password')
@@ -71,6 +57,13 @@ export class UsersRoutes extends CommonRoutesConfig {
       usersMiddleware.validatePatchEmail,
       usersMiddleware.userCannotChangePermission,
       usersController.patch,
+    ]);
+
+    this.app.patch('/users/:userId/permissionFlags/:permissionFlags', [
+      jwtMiddleware.checkValidToken,
+      permissionMiddleware.onlySameUserOrAdminCanAccess,
+      permissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
+      usersController.pathchPermissionFlags,
     ]);
 
     return this.app;

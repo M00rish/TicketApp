@@ -21,11 +21,13 @@ class MongooseService {
     return mongoose;
   }
 
-  connectWithRetry = () => {
+  connectWithRetry = async (
+    DB_URI: string = `mongodb://localhost:27017/api-db`
+  ) => {
     log('Attempting MongoDB connection (will retry if needed)');
 
-    mongoose
-      .connect('mongodb://localhost:27017/api-db')
+    await mongoose
+      .connect(DB_URI)
       .then(() => {
         log('MongoDB is connected');
       })

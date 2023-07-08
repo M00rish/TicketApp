@@ -18,8 +18,8 @@ class UsersDao {
     const userId = shortid.generate();
     const user = new this.User({
       _id: userId,
-      ...userFields,
       permissionFlags: permissionsFlags.USER,
+      ...userFields,
     });
 
     await user.save();
@@ -41,7 +41,9 @@ class UsersDao {
   }
 
   async getUserById(userId: string) {
-    return await this.User.findOne({ _id: userId }).exec();
+    return await this.User.findOne({ _id: userId })
+      .select('-permissionFlags -refreshToken -password')
+      .exec();
   }
 
   async getUsers(limit = 25, page = 0) {
@@ -86,7 +88,7 @@ class UsersDao {
       password: { type: String, select: false },
       firstName: String,
       lastName: String,
-      permessionFlags: Number,
+      permissionFlags: Number,
       refreshToken: String,
     },
     { id: false }
