@@ -30,6 +30,7 @@ export class AuthRoutes extends CommonRoutesConfig {
       jwtMiddleware.rateLimitRefreshTokenRequests,
       jwtMiddleware.checkValidToken,
       jwtMiddleware.checkValidRefreshToken,
+      jwtMiddleware.perpareBody,
       authController.logIn,
     ]);
 

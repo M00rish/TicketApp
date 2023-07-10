@@ -21,10 +21,13 @@ class MongooseService {
     return mongoose;
   }
 
-  connectWithRetry = async (
-    DB_URI: string = `mongodb://localhost:27017/api-db`
-  ) => {
+  connectWithRetry = async () => {
     log('Attempting MongoDB connection (will retry if needed)');
+
+    let DB_URI;
+    typeof global.it === 'function'
+      ? (DB_URI = `mongodb://localhost:27018/test-db`)
+      : (DB_URI = `mongodb://localhost:27017/api-db`);
 
     await mongoose
       .connect(DB_URI)

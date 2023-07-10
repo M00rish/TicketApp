@@ -42,7 +42,7 @@ class UsersDao {
 
   async getUserById(userId: string) {
     return await this.User.findOne({ _id: userId })
-      .select('-permissionFlags -refreshToken -password')
+      .select('-refreshToken -password')
       .exec();
   }
 

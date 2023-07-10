@@ -8,6 +8,7 @@ import usersMiddleware from './middleware/users.middleware';
 import jwtMiddleware from '../auth/middleware/jwt.middleware';
 import permissionMiddleware from '../common/middleware/common.permission.middleware';
 import { permissionsFlags } from '../common/middleware/common.permissionflag.enum';
+import authController from '../auth/controllers/auth.controller';
 
 export class UsersRoutes extends CommonRoutesConfig {
   constructor(app: express.Application) {
@@ -64,6 +65,8 @@ export class UsersRoutes extends CommonRoutesConfig {
       permissionMiddleware.onlySameUserOrAdminCanAccess,
       permissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
       usersController.pathchPermissionFlags,
+      jwtMiddleware.getPermissionsAndId,
+      authController.logIn,
     ]);
 
     return this.app;

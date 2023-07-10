@@ -38,9 +38,14 @@ class UsersController {
     res.status(204).send();
   }
 
-  async pathchPermissionFlags(req: express.Request, res: express.Response) {
-    log(await usersService.patchById(req.body.id, req.body));
-    res.status(204).send();
+  async pathchPermissionFlags(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
+    await usersService.patchById(req.body.id, req.body);
+    // res.status(204).send();
+    next();
   }
 }
 
