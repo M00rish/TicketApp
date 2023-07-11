@@ -13,7 +13,7 @@ export class AuthRoutes extends CommonRoutesConfig {
   }
 
   configureRoutes(): express.Application {
-    this.app.post('/login', [
+    this.app.post('/v1/login', [
       body('email').isEmail(),
       body('password').isString(),
       bodyValidationMiddleware.verifyBodyFieldsError,
@@ -21,12 +21,12 @@ export class AuthRoutes extends CommonRoutesConfig {
       authController.logIn,
     ]);
 
-    this.app.get('/logout', [
+    this.app.get('/v1/logout', [
       jwtMiddleware.checkValidToken,
       authController.logOut,
     ]);
 
-    this.app.post('/refresh-token', [
+    this.app.post('/v1/refresh-token', [
       jwtMiddleware.rateLimitRefreshTokenRequests,
       jwtMiddleware.checkValidToken,
       jwtMiddleware.checkValidRefreshToken,

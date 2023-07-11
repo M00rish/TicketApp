@@ -33,7 +33,7 @@ class AuthService {
         .send({ accessToken });
     } catch (err) {
       log('createJWT error: %O', err);
-      return res.status(500).send();
+      return res.status(500).json();
     }
   }
 
@@ -49,7 +49,7 @@ class AuthService {
       return res.status(204).send();
     } catch (err) {
       log('clearJWT error: %O', err);
-      return res.status(500).send();
+      return res.status(500).json();
     }
   }
 }

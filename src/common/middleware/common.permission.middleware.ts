@@ -17,10 +17,11 @@ class permissionMiddleware {
         if (requiredPermissionFlags & userPermissionFlag) {
           next();
         } else {
-          res.status(403).send({ error: 'Permission denied!' });
+          res.status(403).json({ error: 'Permission denied!' });
         }
       } catch (err) {
         log(err);
+        res.status(403).json({ error: 'Something went wrong!' });
       }
     };
   }
@@ -41,7 +42,7 @@ class permissionMiddleware {
       if (userPermissionFlag & permissionsFlags.ADMIN) {
         next();
       } else {
-        res.status(403).send({ error: 'Permission denied!' });
+        res.status(403).json({ error: 'Permission denied!' });
       }
     }
   }

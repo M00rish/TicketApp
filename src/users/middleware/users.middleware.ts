@@ -29,7 +29,7 @@ class UsersMiddleware {
     if (res.locals.user && res.locals.user._id === req.params.userId) {
       next();
     } else {
-      res.status(400).send({ error: 'invalid email' });
+      res.status(400).json({ error: 'invalid email' });
     }
   }
 
@@ -56,7 +56,7 @@ class UsersMiddleware {
       res.locals.user = user;
       next();
     } else {
-      res.status(404).send({
+      res.status(404).json({
         error: `User not found`,
       });
     }
@@ -81,7 +81,9 @@ class UsersMiddleware {
       req.body.permissionFlags != res.locals.jwt.permissionFlags
     ) {
       if (res.locals.jwt.permissionFlags < 4) {
-        return res.status(403).send('user cannot change permission levels');
+        return res
+          .status(403)
+          .json({ error: 'user cannot change permission levels' });
       }
       usersService.patchById(res.locals.user._id, {
         permissionFlags: req.body.permissionFlags,
@@ -89,6 +91,15 @@ class UsersMiddleware {
     } else {
       next();
     }
+  }
+
+  async pathchPermissionFlags(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
+    await usersService.patchById(req.body.id, req.body);
+    next();
   }
 }
 

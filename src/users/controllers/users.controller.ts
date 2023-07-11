@@ -9,19 +9,19 @@ const log: debug.IDebugger = debug('app:user-controller');
 class UsersController {
   async listUsers(req: express.Request, res: express.Response) {
     const users = await usersService.list(100, 0);
-    res.status(200).send(users);
+    res.status(200).json(users);
   }
 
   async getUserById(req: express.Request, res: express.Response) {
     const user = await usersService.readById(req.body.id);
-    res.status(200).send(user);
+    res.status(200).json(user);
   }
 
   async createUser(req: express.Request, res: express.Response) {
     req.body.password = bcrypt.hashSync(req.body.password, 10);
 
     const UserId = await usersService.create(req.body);
-    res.status(201).send({ _id: UserId });
+    res.status(201).json({ _id: UserId });
   }
 
   async patch(req: express.Request, res: express.Response) {
@@ -30,22 +30,12 @@ class UsersController {
     }
 
     const UserId = await usersService.patchById(req.body.id, req.body);
-    res.status(204).send(UserId);
+    res.status(204).json({ _id: UserId });
   }
 
   async removeUser(req: express.Request, res: express.Response) {
     log(await usersService.deleteById(req.body.id));
-    res.status(204).send();
-  }
-
-  async pathchPermissionFlags(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) {
-    await usersService.patchById(req.body.id, req.body);
-    // res.status(204).send();
-    next();
+    res.status(204).json();
   }
 }
 

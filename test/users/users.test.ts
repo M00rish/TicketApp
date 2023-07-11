@@ -42,7 +42,7 @@ describe('users and auth endpoints', function () {
   });
 
   it('should allow a POST to /users', async function () {
-    const response = await request.post('/users').send(firstUserBody);
+    const response = await request.post('/v1/users').send(firstUserBody);
     expect(response.status).to.equal(201);
     expect(response.body).not.to.be.empty;
     expect(response.body).to.be.an('Object');
@@ -51,7 +51,7 @@ describe('users and auth endpoints', function () {
   });
 
   it('should allow a POST to /login', async function () {
-    const response = await request.post('/login').send(firstUserBody);
+    const response = await request.post('/v1/login').send(firstUserBody);
     expect(response.status).to.equal(201);
     expect(response.body).not.to.be.empty;
     expect(response.body).to.be.an('Object');
@@ -63,7 +63,7 @@ describe('users and auth endpoints', function () {
   describe('with an access token', function () {
     it('should not allow a GET to /users', async function () {
       const response = await request
-        .get(`/users`)
+        .get(`/v1/users`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send();
       expect(response.status).to.equal(403);
@@ -71,7 +71,7 @@ describe('users and auth endpoints', function () {
 
     it('should allow a GET to /users/:userId ', async function () {
       const response = await request
-        .get(`/users/${firstUserIdTest}`)
+        .get(`/v1/users/${firstUserIdTest}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send();
       expect(response.status).to.equal(200);
@@ -86,7 +86,7 @@ describe('users and auth endpoints', function () {
 
     it('should allow a PATCH to /users/:userId', async function () {
       const response = await request
-        .patch(`/users/${firstUserIdTest}`)
+        .patch(`/v1/users/${firstUserIdTest}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
           firstName: newFirstName,
@@ -97,7 +97,7 @@ describe('users and auth endpoints', function () {
 
     it('should not allow a Patch to /users/:userId to change permission Flags for a user', async function () {
       const response = await request
-        .patch(`/users/${firstUserIdTest}`)
+        .patch(`/v1/users/${firstUserIdTest}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
           permissionFlags: 4,
@@ -107,7 +107,7 @@ describe('users and auth endpoints', function () {
 
     it('should allow a Post to /refresh-token for a refreshtoken', async function () {
       const response = await request
-        .post(`/refresh-token`)
+        .post(`/v1/refresh-token`)
         .set('Authorization', `Bearer ${accessToken}`)
         .set('Cookie', refreshToken)
         .send({ firstUserBody });
@@ -123,16 +123,16 @@ describe('users and auth endpoints', function () {
 
     it('should not allow a POST to /refresh-token for a refreshtoken twice ', async function () {
       const response = await request
-        .post(`/refresh-token`)
+        .post(`/v1/refresh-token`)
         .set('Authorization', `Bearer ${accessToken}`)
         .set('Cookie', refreshToken)
-        .send({ firstUserBody });
+        .send();
       expect(response.status).to.equal(429);
     });
 
     it('should not allow a PACTH to /users/:id with an id that does not exist', async function () {
       const response = await request
-        .patch(`/users/nonExistingId`)
+        .patch(`/v1/users/nonExistingId`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
           firstName: newFirstName2,
@@ -145,7 +145,7 @@ describe('users and auth endpoints', function () {
 
     it('should allow a patch to /users/:userId/permissionFlags/:permissionFlags', async function () {
       const response = await request
-        .patch(`/users/${firstUserIdTest}/permissionFlags/4`)
+        .patch(`/v1/users/${firstUserIdTest}/permissionFlags/4`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
           permissionFlags: 4,
@@ -159,7 +159,7 @@ describe('users and auth endpoints', function () {
     describe('with an admin permission flag', function () {
       it('should allow a POST to /users', async function () {
         const response = await request
-          .post('/users')
+          .post('/v1/users')
           .set('Authorization', `Bearer ${accessToken}`)
           .send(secondUserBody);
         expect(response.status).to.equal(201);
@@ -172,7 +172,7 @@ describe('users and auth endpoints', function () {
 
       it('should allow a patch to /users/:userId/ to change firstname and lastname for a user', async function () {
         const response = await request
-          .patch(`/users/${SecondUserIdTest}`)
+          .patch(`/v1/users/${SecondUserIdTest}`)
           .set('Authorization', `Bearer ${accessToken}`)
           .send({
             firstName: newFirstName2,
@@ -184,7 +184,7 @@ describe('users and auth endpoints', function () {
 
       it('should allow a get from /users/:userId to see the new firstname and lastname for a user', async function () {
         const response = await request
-          .get(`/users/${SecondUserIdTest}`)
+          .get(`/v1/users/${SecondUserIdTest}`)
           .set('Authorization', `Bearer ${accessToken}`)
           .send();
         expect(response.status).to.equal(200);
@@ -199,13 +199,14 @@ describe('users and auth endpoints', function () {
         expect(response.body.lastName).to.equal(newLastName2);
       });
 
-      // it('should allow a DELETE to /users/:userId', async function () {
-      //   const response = await request
-      //     .delete(`/users/${firstUserIdTest}`)
-      //     .set('Authorization', `Bearer ${accessToken}`)
-      //     .send();
-      //   expect(response.status).to.equal(204);
-      // });
+      it('should allow a DELETE to /users/:userId', async function () {
+        const response = await request
+          .delete(`/v1/users/${SecondUserIdTest}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send();
+        expect(response.status).to.equal(204);
+        expect(response.body).to.be.empty;
+      });
     });
   });
 });

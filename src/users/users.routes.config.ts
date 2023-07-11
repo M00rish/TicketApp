@@ -17,7 +17,7 @@ export class UsersRoutes extends CommonRoutesConfig {
 
   configureRoutes(): express.Application {
     this.app
-      .route('/users')
+      .route('/v1/users')
       .get(
         jwtMiddleware.checkValidToken,
         permissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
@@ -36,7 +36,7 @@ export class UsersRoutes extends CommonRoutesConfig {
     this.app.param(`userId`, usersMiddleware.extractUserId);
 
     this.app
-      .route('/users/:userId')
+      .route('/v1/users/:userId')
       .all(
         usersMiddleware.validateUserExists,
         jwtMiddleware.checkValidToken,
@@ -45,7 +45,7 @@ export class UsersRoutes extends CommonRoutesConfig {
       .get(usersController.getUserById)
       .delete(usersController.removeUser);
 
-    this.app.patch('/users/:userId', [
+    this.app.patch('/v1/users/:userId', [
       body('email').isEmail().optional(),
       body('password')
         .isLength({ min: 5 })
@@ -60,11 +60,11 @@ export class UsersRoutes extends CommonRoutesConfig {
       usersController.patch,
     ]);
 
-    this.app.patch('/users/:userId/permissionFlags/:permissionFlags', [
+    this.app.patch('/v1/users/:userId/permissionFlags/:permissionFlags', [
       jwtMiddleware.checkValidToken,
       permissionMiddleware.onlySameUserOrAdminCanAccess,
       permissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
-      usersController.pathchPermissionFlags,
+      usersMiddleware.pathchPermissionFlags,
       jwtMiddleware.getPermissionsAndId,
       authController.logIn,
     ]);

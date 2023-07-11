@@ -29,10 +29,10 @@ class JwtMiddleware {
         }
       } catch (err) {
         log('checkValidToken error: %O', err);
-        return res.status(403).send('Invalid token');
+        return res.status(403).json({ error: 'Invalid token' });
       }
     } else {
-      return res.status(401).send('No token provided');
+      return res.status(401).json({ error: 'No token provided' });
     }
   }
 
@@ -50,39 +50,49 @@ class JwtMiddleware {
       ) {
         return next();
       } else {
-        return res.status(400).send('Invalid refresh token');
+        return res.status(400).json({ error: 'Invalid refresh token' });
       }
     } catch (err) {
       log('checkValidRefreshToken error: %O', err);
-      return res.status(403).send('no refresh token provided');
+      return res.status(403).json({ error: 'no refresh token provided' });
     }
   }
 
-  async perpareBody(
+  perpareBody(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
-    req.body = {
-      userId: res.locals.jwt.userId,
-      permissionFlags: res.locals.jwt.permissionFlags,
-    };
-    next();
+    try {
+      req.body = {
+        userId: res.locals.jwt.userId,
+        permissionFlags: res.locals.jwt.permissionFlags,
+      };
+      next();
+    } catch (err) {
+      log('perpareBody error: %O', err);
+      return res.status(403).json({ error: 'Something went wrong!' });
+    }
   }
+
   async getPermissionsAndId(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
-    const user: any = await usersService.readById(res.locals.jwt.userId);
-    log('user: %O', user);
-    if (user) {
-      req.body = {
-        userId: user._id,
-        permissionFlags: user.permissionFlags,
-      };
+    try {
+      const user: any = await usersService.readById(res.locals.jwt.userId);
+      if (user) {
+        req.body = {
+          userId: user._id,
+          permissionFlags: user.permissionFlags,
+        };
+      }
+      return next();
+    } catch (err) {
+      log('getPermissionsAndId error: %O', err);
+      return res.status(403).json({ error: 'Something went wrong!' });
     }
-    return next();
   }
 
   rateLimitRefreshTokenRequests = rateLimit({
