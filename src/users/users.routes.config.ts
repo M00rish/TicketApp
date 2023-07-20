@@ -7,7 +7,7 @@ import usersController from './controllers/users.controller';
 import usersMiddleware from './middleware/users.middleware';
 import jwtMiddleware from '../auth/middleware/jwt.middleware';
 import permissionMiddleware from '../common/middleware/common.permission.middleware';
-import { permissionsFlags } from '../common/middleware/common.permissionflag.enum';
+import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
 import authController from '../auth/controllers/auth.controller';
 
 export class UsersRoutes extends CommonRoutesConfig {
@@ -53,17 +53,16 @@ export class UsersRoutes extends CommonRoutesConfig {
         .optional(),
       body('firstName').isString().optional(),
       body('lastName').isString().optional(),
-      body('permissionFlags').isInt().optional(),
       bodyValidationMiddleware.verifyBodyFieldsError,
       usersMiddleware.validatePatchEmail,
       usersMiddleware.userCannotChangePermission,
+      usersMiddleware.updateUserPhoto,
       usersController.patch,
     ]);
 
     this.app.patch('/v1/users/:userId/permissionFlags/:permissionFlags', [
       jwtMiddleware.checkValidToken,
       permissionMiddleware.onlySameUserOrAdminCanAccess,
-      permissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
       usersMiddleware.pathchPermissionFlags,
       jwtMiddleware.getPermissionsAndId,
       authController.logIn,

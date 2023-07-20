@@ -5,6 +5,8 @@ import rateLimit from 'express-rate-limit';
 import usersService from '../../users/services/users.service';
 
 import { Jwt } from '../../common/types/jwt';
+import AppError from '../../common/types/appError';
+import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 
 const log: debug.IDebugger = debug('app:Jwt-Middlware');
 
@@ -18,6 +20,13 @@ class JwtMiddleware {
       try {
         const authorization = req.headers['authorization'].split(' ');
         if (authorization[0] !== 'Bearer') {
+          const jwtError = new AppError(
+            true,
+            'NO_TOKEN_ERROR',
+            HttpStatusCode.Unauthorized,
+            'you are not logged in,'
+          );
+          next(jwtError);
           return res.status(401).send();
         } else {
           res.locals.jwt = jwt.verify(
@@ -28,11 +37,22 @@ class JwtMiddleware {
           next();
         }
       } catch (err) {
-        log('checkValidToken error: %O', err);
-        return res.status(403).json({ error: 'Invalid token' });
+        const jwtError = new AppError(
+          true,
+          'INVALID_TOKEN_ERROR',
+          HttpStatusCode.Unauthorized,
+          'something went wrong... please login again'
+        );
+        next(jwtError);
       }
     } else {
-      return res.status(401).json({ error: 'No token provided' });
+      const jwtError = new AppError(
+        true,
+        'NO_TOKEN_ERROR',
+        HttpStatusCode.Unauthorized,
+        'you are not logged in'
+      );
+      next(jwtError);
     }
   }
 
@@ -50,11 +70,22 @@ class JwtMiddleware {
       ) {
         return next();
       } else {
-        return res.status(400).json({ error: 'Invalid refresh token' });
+        const refreshTokenError = new AppError(
+          true,
+          'INVALID_REFRESH_TOKEN_ERROR',
+          HttpStatusCode.Unauthorized,
+          'Invalid refresh token'
+        );
+        next(refreshTokenError);
       }
     } catch (err) {
-      log('checkValidRefreshToken error: %O', err);
-      return res.status(403).json({ error: 'no refresh token provided' });
+      const refreshTokenError = new AppError(
+        false,
+        'REFRESH_TOKEN_ERROR',
+        HttpStatusCode.Unauthorized,
+        'Something went wrong...'
+      );
+      next(refreshTokenError);
     }
   }
 
@@ -63,15 +94,20 @@ class JwtMiddleware {
     res: express.Response,
     next: express.NextFunction
   ) {
-    try {
+    if (req.body) {
       req.body = {
         userId: res.locals.jwt.userId,
         permissionFlags: res.locals.jwt.permissionFlags,
       };
       next();
-    } catch (err) {
-      log('perpareBody error: %O', err);
-      return res.status(403).json({ error: 'Something went wrong!' });
+    } else {
+      const jwtError = new AppError(
+        false,
+        'PREPARE_BODY_ERROR',
+        HttpStatusCode.Unauthorized,
+        'Something went wrong...'
+      );
+      next(jwtError);
     }
   }
 
@@ -88,10 +124,15 @@ class JwtMiddleware {
           permissionFlags: user.permissionFlags,
         };
       }
-      return next();
+      next();
     } catch (err) {
-      log('getPermissionsAndId error: %O', err);
-      return res.status(403).json({ error: 'Something went wrong!' });
+      const permissionError = new AppError(
+        false,
+        'GET_PERMISSIONS_AND_ID_ERROR',
+        HttpStatusCode.Unauthorized,
+        'Something went wrong...'
+      );
+      next(permissionError);
     }
   }
 

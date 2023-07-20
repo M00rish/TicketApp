@@ -66,6 +66,7 @@ describe('users and auth endpoints', function () {
         .get(`/v1/users`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send();
+
       expect(response.status).to.equal(403);
     });
 
@@ -92,6 +93,7 @@ describe('users and auth endpoints', function () {
           firstName: newFirstName,
           lastName: newLastName,
         });
+
       expect(response.status).to.equal(204);
     });
 
@@ -177,6 +179,7 @@ describe('users and auth endpoints', function () {
           .send({
             firstName: newFirstName2,
             lastName: newLastName2,
+            // permissionFlags: 2, to test the tripguide permission flag
           });
 
         expect(response.status).to.equal(204);
@@ -187,6 +190,7 @@ describe('users and auth endpoints', function () {
           .get(`/v1/users/${SecondUserIdTest}`)
           .set('Authorization', `Bearer ${accessToken}`)
           .send();
+
         expect(response.status).to.equal(200);
         expect(response.body).not.to.be.empty;
         expect(response.body).to.be.an('Object');

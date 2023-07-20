@@ -2,6 +2,9 @@ import express from 'express';
 import { validationResult } from 'express-validator';
 import debug from 'debug';
 
+import HttpStatusCode from '../enums/HttpStatusCode.enum';
+import AppError from '../types/appError';
+
 const log: debug.IDebugger = debug('app:bodyValidationMiddleware');
 
 class bodyValidationMiddleware {
@@ -10,11 +13,19 @@ class bodyValidationMiddleware {
     res: express.Response,
     next: express.NextFunction
   ) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      log(errors);
-      return res.status(400).send({ errors });
+    const errors = validationResult(req).array();
+    let validationError;
+    if (errors.length) {
+      validationError = new AppError(
+        true,
+        'VALIDATION_ERROR',
+        HttpStatusCode.BadRequest,
+        JSON.stringify(errors)
+      );
+
+      next(validationError);
     }
+
     next();
   }
 }

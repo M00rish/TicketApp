@@ -5,7 +5,7 @@ import { CreateUserDto } from '../dtos/create.user.dto';
 import { PutUserDto } from '../dtos/put.user.dto';
 import { PatchUserDto } from '../dtos/patch.user.dto';
 import mongooseService from '../../common/service/mongoose.service';
-import { permissionsFlags } from '../../common/middleware/common.permissionflag.enum';
+import { permissionsFlags } from '../../common/enums/common.permissionflag.enum';
 
 const log: debug.IDebugger = debug('app:in-memory-dao');
 
@@ -19,6 +19,7 @@ class UsersDao {
     const user = new this.User({
       _id: userId,
       permissionFlags: permissionsFlags.USER,
+      image: '',
       ...userFields,
     });
 
@@ -33,7 +34,7 @@ class UsersDao {
       { new: true }
     ).exec();
 
-    return existingUser;
+    return existingUser?._id;
   }
 
   async getUserByEmail(email: string) {
@@ -88,6 +89,7 @@ class UsersDao {
       password: { type: String, select: false },
       firstName: String,
       lastName: String,
+      image: String,
       permissionFlags: Number,
       refreshToken: String,
     },

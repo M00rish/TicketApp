@@ -6,10 +6,13 @@ import expressWinston from 'express-winston';
 import cors from 'cors';
 import debug from 'debug';
 import dotenv from 'dotenv';
+import bodyParser from 'body-parser';
 
 import { CommonRoutesConfig } from './common/common.routes.config';
 import { UsersRoutes } from './users/users.routes.config';
 import { AuthRoutes } from './auth/auth.routes.config';
+import errorHandlingMiddleware from './common/middleware/error.handler.middleware';
+import { rateLimit } from 'express-rate-limit';
 
 const app: express.Application = express();
 const server: http.Server = http.createServer(app);
@@ -22,9 +25,18 @@ if (dotenvResults.error) {
   throw dotenvResults.error;
 }
 
-app.use(express.json());
+// add rate limiting middleware
+app.use(rateLimit({ windowMs: 60 * 1000, max: 10 }));
 
 app.use(cors());
+
+app.use(express.json({ limit: '10kb' }));
+
+// app.use(express.json());
+
+app.use(express.urlencoded({ extended: true }));
+
+app.use(bodyParser.json());
 
 const loggerOptions: expressWinston.LoggerOptions = {
   transports: [new winston.transports.Console()],
@@ -51,6 +63,8 @@ const startingMessage = `server is running on ${port}`;
 app.get('/', (req: express.Request, res: express.Response) => {
   res.status(200).send(startingMessage);
 });
+
+app.use(errorHandlingMiddleware.errorHandler);
 
 export default app;
 

@@ -1,6 +1,7 @@
 import express from 'express';
-import { permissionsFlags } from './common.permissionflag.enum';
+import { permissionsFlags } from '../enums/common.permissionflag.enum';
 import debug from 'debug';
+import AppError from '../types/appError';
 
 const log: debug.IDebugger = debug('app:common-permission-middleware');
 
@@ -17,11 +18,22 @@ class permissionMiddleware {
         if (requiredPermissionFlags & userPermissionFlag) {
           next();
         } else {
-          res.status(403).json({ error: 'Permission denied!' });
+          const error = new AppError(
+            true,
+            'permissionsFlagsRequired_Error',
+            403,
+            "you're not authorized to perform this operation"
+          );
+          next(error);
         }
       } catch (err) {
-        log(err);
-        res.status(403).json({ error: 'Something went wrong!' });
+        const error = new AppError(
+          false,
+          'permissionsFlagsRequired_Error',
+          403,
+          'Something went wrong!'
+        );
+        next(error);
       }
     };
   }
@@ -42,7 +54,13 @@ class permissionMiddleware {
       if (userPermissionFlag & permissionsFlags.ADMIN) {
         next();
       } else {
-        res.status(403).json({ error: 'Permission denied!' });
+        const error = new AppError(
+          true,
+          'onlySameUserOrAdminCanAccess_Error',
+          403,
+          "you're not authorized to perform this operation"
+        );
+        next(error);
       }
     }
   }

@@ -3,6 +3,7 @@ import debug from 'debug';
 import bcrypt from 'bcryptjs';
 
 import usersService from '../../users/services/users.service';
+import AppError from '../../common/types/appError';
 
 const log: debug.IDebugger = debug('app:Auth-Middlware');
 
@@ -28,7 +29,14 @@ class AuthMiddlware {
       }
     }
 
-    res.status(400).json({ errors: ['Invalid email and/or password'] });
+    const loginError = new AppError(
+      true,
+      'LOGIN_ERROR',
+      400,
+      'Invalid email and/or password'
+    );
+
+    next(loginError);
   }
 }
 

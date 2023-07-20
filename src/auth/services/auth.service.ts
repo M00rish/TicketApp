@@ -3,11 +3,17 @@ import debug from 'debug';
 import Jwt from 'jsonwebtoken';
 
 import usersService from '../../users/services/users.service';
+import AppError from '../../common/types/appError';
+import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 
 const log: debug.IDebugger = debug('app:auth-controller');
 
 class AuthService {
-  async createJWT(req: express.Request, res: express.Response) {
+  async createJWT(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     try {
       const refreshToken = Jwt.sign(req.body, process.env.REFRESH_SECRET, {
         expiresIn: process.env.REFRESH_TOKEN_LIFE,
@@ -32,12 +38,21 @@ class AuthService {
         .status(201)
         .send({ accessToken });
     } catch (err) {
-      log('createJWT error: %O', err);
-      return res.status(500).json();
+      const createJWTError = new AppError(
+        false,
+        'CREATE_JWT_ERROR',
+        HttpStatusCode.InternalServerError,
+        'Something went wrong...'
+      );
+      return next(createJWTError);
     }
   }
 
-  async clearJWT(req: express.Request, res: express.Response) {
+  async clearJWT(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     try {
       await usersService.updateUserRefreshTokenById(res.locals.jwt.userId, '');
       res.locals.jwt = null;
@@ -48,8 +63,13 @@ class AuthService {
 
       return res.status(204).send();
     } catch (err) {
-      log('clearJWT error: %O', err);
-      return res.status(500).json();
+      const clearJWTError = new AppError(
+        false,
+        'CLEAR_JWT_ERROR',
+        HttpStatusCode.InternalServerError,
+        'Something went wrong...'
+      );
+      return next(clearJWTError);
     }
   }
 }

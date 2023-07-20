@@ -15,7 +15,9 @@ export class AuthRoutes extends CommonRoutesConfig {
   configureRoutes(): express.Application {
     this.app.post('/v1/login', [
       body('email').isEmail(),
-      body('password').isString(),
+      body('password')
+        .isLength({ min: 5 })
+        .withMessage('Must include password (5+ characters)'),
       bodyValidationMiddleware.verifyBodyFieldsError,
       authMiddleware.verifyUserPassword,
       authController.logIn,
