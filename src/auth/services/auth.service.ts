@@ -38,13 +38,13 @@ class AuthService {
         .status(201)
         .send({ accessToken });
     } catch (err) {
-      const createJWTError = new AppError(
+      const error = new AppError(
         false,
         'CREATE_JWT_ERROR',
         HttpStatusCode.InternalServerError,
         'Something went wrong...'
       );
-      return next(createJWTError);
+      return next(error);
     }
   }
 
@@ -63,13 +63,13 @@ class AuthService {
 
       return res.status(204).send();
     } catch (err) {
-      const clearJWTError = new AppError(
+      const error = new AppError(
         false,
         'CLEAR_JWT_ERROR',
         HttpStatusCode.InternalServerError,
         'Something went wrong...'
       );
-      return next(clearJWTError);
+      return next(error);
     }
   }
 }

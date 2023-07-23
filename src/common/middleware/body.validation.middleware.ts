@@ -14,16 +14,16 @@ class bodyValidationMiddleware {
     next: express.NextFunction
   ) {
     const errors = validationResult(req).array();
-    let validationError;
+    let error;
     if (errors.length) {
-      validationError = new AppError(
+      error = new AppError(
         true,
         'VALIDATION_ERROR',
         HttpStatusCode.BadRequest,
         JSON.stringify(errors)
       );
 
-      next(validationError);
+      next(error);
     }
 
     next();

@@ -29,14 +29,14 @@ class AuthMiddlware {
       }
     }
 
-    const loginError = new AppError(
+    const error = new AppError(
       true,
       'LOGIN_ERROR',
       400,
       'Invalid email and/or password'
     );
 
-    next(loginError);
+    next(error);
   }
 }
 

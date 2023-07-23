@@ -2,8 +2,8 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import debug from 'debug';
 import rateLimit from 'express-rate-limit';
-import usersService from '../../users/services/users.service';
 
+import usersService from '../../users/services/users.service';
 import { Jwt } from '../../common/types/jwt';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
@@ -20,13 +20,13 @@ class JwtMiddleware {
       try {
         const authorization = req.headers['authorization'].split(' ');
         if (authorization[0] !== 'Bearer') {
-          const jwtError = new AppError(
+          const error = new AppError(
             true,
             'NO_TOKEN_ERROR',
             HttpStatusCode.Unauthorized,
             'you are not logged in,'
           );
-          next(jwtError);
+          next(error);
           return res.status(401).send();
         } else {
           res.locals.jwt = jwt.verify(
@@ -37,22 +37,22 @@ class JwtMiddleware {
           next();
         }
       } catch (err) {
-        const jwtError = new AppError(
+        const error = new AppError(
           true,
           'INVALID_TOKEN_ERROR',
           HttpStatusCode.Unauthorized,
-          'something went wrong... please login again'
+          'Something went wrong... please login again'
         );
-        next(jwtError);
+        next(error);
       }
     } else {
-      const jwtError = new AppError(
+      const error = new AppError(
         true,
         'NO_TOKEN_ERROR',
         HttpStatusCode.Unauthorized,
         'you are not logged in'
       );
-      next(jwtError);
+      next(error);
     }
   }
 
@@ -70,22 +70,22 @@ class JwtMiddleware {
       ) {
         return next();
       } else {
-        const refreshTokenError = new AppError(
+        const error = new AppError(
           true,
           'INVALID_REFRESH_TOKEN_ERROR',
           HttpStatusCode.Unauthorized,
           'Invalid refresh token'
         );
-        next(refreshTokenError);
+        next(error);
       }
     } catch (err) {
-      const refreshTokenError = new AppError(
+      const error = new AppError(
         false,
         'REFRESH_TOKEN_ERROR',
         HttpStatusCode.Unauthorized,
         'Something went wrong...'
       );
-      next(refreshTokenError);
+      next(error);
     }
   }
 
@@ -101,13 +101,13 @@ class JwtMiddleware {
       };
       next();
     } else {
-      const jwtError = new AppError(
+      const error = new AppError(
         false,
         'PREPARE_BODY_ERROR',
         HttpStatusCode.Unauthorized,
         'Something went wrong...'
       );
-      next(jwtError);
+      next(error);
     }
   }
 
@@ -126,13 +126,13 @@ class JwtMiddleware {
       }
       next();
     } catch (err) {
-      const permissionError = new AppError(
+      const error = new AppError(
         false,
         'GET_PERMISSIONS_AND_ID_ERROR',
         HttpStatusCode.Unauthorized,
         'Something went wrong...'
       );
-      next(permissionError);
+      next(error);
     }
   }
 

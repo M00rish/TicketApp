@@ -1,9 +1,9 @@
 import express from 'express';
 import debug from 'debug';
-import userService from '../services/users.service';
-import usersService from '../services/users.service';
 import multer from 'multer';
 import path from 'path';
+
+import usersService from '../services/users.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 
@@ -15,7 +15,7 @@ class UsersMiddleware {
     res: express.Response,
     next: express.NextFunction
   ) {
-    const user = await userService.getUserByEmail(req.body.email);
+    const user = await usersService.getUserByEmail(req.body.email);
 
     if (!user) {
       next();
@@ -66,14 +66,18 @@ class UsersMiddleware {
     res: express.Response,
     next: express.NextFunction
   ) {
-    const user = await userService.readById(req.body.id);
+    const user = await usersService.readById(req.body.id);
     if (user) {
       res.locals.user = user;
       next();
     } else {
-      res.status(404).json({
-        error: `User not found`,
-      });
+      const error = new AppError(
+        true,
+        'validateUserExists_Error',
+        HttpStatusCode.NotFound,
+        'user not found'
+      );
+      next(error);
     }
   }
 

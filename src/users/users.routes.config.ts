@@ -57,7 +57,7 @@ export class UsersRoutes extends CommonRoutesConfig {
       usersMiddleware.validatePatchEmail,
       usersMiddleware.userCannotChangePermission,
       usersMiddleware.updateUserPhoto,
-      usersController.patch,
+      usersController.patchUser,
     ]);
 
     this.app.patch('/v1/users/:userId/permissionFlags/:permissionFlags', [
