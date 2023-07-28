@@ -1,13 +1,13 @@
 import shortid from 'shortid';
 import debug from 'debug';
+import bcrypt from 'bcryptjs';
 
 import { CreateUserDto } from '../dtos/create.user.dto';
 import { PutUserDto } from '../dtos/put.user.dto';
 import { PatchUserDto } from '../dtos/patch.user.dto';
 import mongooseService from '../../common/service/mongoose.service';
-import { permissionsFlags } from '../../common/enums/common.permissionflag.enum';
 
-const log: debug.IDebugger = debug('app:in-memory-dao');
+const log: debug.IDebugger = debug('app:users-dao');
 
 class UsersDao {
   constructor() {
@@ -18,8 +18,6 @@ class UsersDao {
     const userId = shortid.generate();
     const user = new this.User({
       _id: userId,
-      permissionFlags: permissionsFlags.USER,
-      image: '',
       ...userFields,
     });
 
@@ -85,16 +83,27 @@ class UsersDao {
   userSchema = new this.schema(
     {
       _id: String,
-      email: String,
+      email: {
+        type: String,
+        unique: true,
+        required: [true, 'Email is required'],
+      },
       password: { type: String, select: false },
-      firstName: String,
-      lastName: String,
-      image: String,
-      permissionFlags: Number,
-      refreshToken: String,
+      firstName: { type: String, required: [true, 'First name is required'] },
+      lastName: { type: String, required: [true, 'Last name is required'] },
+      image: { type: String, default: 'default.jpg' },
+      permissionFlags: { type: Number, enum: [1, 2, 4], default: 1 },
+      refreshToken: { type: String, select: false },
     },
     { id: false }
-  );
+  ).pre('save', async function (next) {
+    const user = this as any;
+    if (!this.isModified('password')) {
+      return next();
+    }
+    user.password = await bcrypt.hashSync(user.password, 10);
+    next();
+  });
 
   User = mongooseService.getMongoose().model('User', this.userSchema);
 }

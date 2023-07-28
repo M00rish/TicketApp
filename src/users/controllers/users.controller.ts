@@ -17,12 +17,12 @@ class UsersController {
     try {
       const users = await usersService.list(100, 0);
       res.status(200).json(users);
-    } catch (err: any) {
-      const error = new AppError(
+    } catch (error: any) {
+      error = new AppError(
         false,
         'listUsers_Error',
         HttpStatusCode.BadRequest,
-        'Something went wrong...'
+        error.message
       );
       next(error);
     }
@@ -36,12 +36,12 @@ class UsersController {
     try {
       const user = await usersService.readById(req.body.id);
       res.status(200).json(user);
-    } catch (err: any) {
-      const error = new AppError(
+    } catch (error: any) {
+      error = new AppError(
         false,
         'getUserById_Error',
         HttpStatusCode.BadRequest,
-        'Something went wrong...'
+        error.message
       );
       next(error);
     }
@@ -53,16 +53,14 @@ class UsersController {
     next: express.NextFunction
   ) {
     try {
-      req.body.password = bcrypt.hashSync(req.body.password, 10);
-
       const UserId: string = await usersService.create(req.body);
       res.status(201).json({ _id: UserId });
-    } catch (err: any) {
-      const error = new AppError(
+    } catch (error: any) {
+      error = new AppError(
         false,
         'createUser_Error',
         HttpStatusCode.BadRequest,
-        'Something went wrong...'
+        error.message
       );
       next(error);
     }
@@ -80,12 +78,12 @@ class UsersController {
 
       const UserId = await usersService.patchById(req.params.userId, req.body);
       res.status(204).send({ _id: UserId });
-    } catch (err: any) {
-      const error = new AppError(
+    } catch (error: any) {
+      error = new AppError(
         false,
         'patchUser_Error',
         HttpStatusCode.BadRequest,
-        'Something went wrong...'
+        error.message
       );
       next(error);
     }
@@ -99,12 +97,12 @@ class UsersController {
     try {
       await usersService.deleteById(req.body.id);
       res.status(204).json('User deleted');
-    } catch (err: any) {
-      const error = new AppError(
+    } catch (error: any) {
+      error = new AppError(
         false,
         'removeUser_Error',
         HttpStatusCode.BadRequest,
-        'Something went wrong...'
+        error.message
       );
       next(error);
     }

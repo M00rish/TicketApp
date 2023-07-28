@@ -5,12 +5,13 @@ import expressWinston from 'express-winston';
 import cors from 'cors';
 import debug from 'debug';
 import dotenv from 'dotenv';
+import { rateLimit } from 'express-rate-limit';
 
 import { CommonRoutesConfig } from './common/common.routes.config';
 import { UsersRoutes } from './users/users.routes.config';
 import { AuthRoutes } from './auth/auth.routes.config';
+import { TripsRoutes } from './trips/trips.routes.config';
 import errorHandlerMiddleware from './common/middleware/error.handler.middleware';
-import { rateLimit } from 'express-rate-limit';
 
 const app: express.Application = express();
 const server: http.Server = http.createServer(app);
@@ -54,6 +55,7 @@ app.use(expressWinston.logger(loggerOptions));
 
 routes.push(new UsersRoutes(app));
 routes.push(new AuthRoutes(app));
+routes.push(new TripsRoutes(app));
 
 const startingMessage = `server is running on ${port}`;
 app.get('/', (req: express.Request, res: express.Response) => {

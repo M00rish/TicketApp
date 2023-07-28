@@ -23,7 +23,7 @@ class bodyValidationMiddleware {
         JSON.stringify(errors)
       );
 
-      next(error);
+      return next(error);
     }
 
     next();

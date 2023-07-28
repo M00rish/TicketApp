@@ -6,7 +6,7 @@ import { CommonRoutesConfig } from '../common/common.routes.config';
 import usersController from './controllers/users.controller';
 import usersMiddleware from './middleware/users.middleware';
 import jwtMiddleware from '../auth/middleware/jwt.middleware';
-import permissionMiddleware from '../common/middleware/common.permission.middleware';
+import commonPermissionMiddleware from '../common/middleware/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
 import authController from '../auth/controllers/auth.controller';
 
@@ -20,7 +20,9 @@ export class UsersRoutes extends CommonRoutesConfig {
       .route('/v1/users')
       .get(
         jwtMiddleware.checkValidToken,
-        permissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
+        commonPermissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        ),
         usersController.listUsers
       )
       .post(
@@ -40,7 +42,7 @@ export class UsersRoutes extends CommonRoutesConfig {
       .all(
         usersMiddleware.validateUserExists,
         jwtMiddleware.checkValidToken,
-        permissionMiddleware.onlySameUserOrAdminCanAccess
+        commonPermissionMiddleware.onlySameUserOrAdminCanAccess
       )
       .get(usersController.getUserById)
       .delete(usersController.removeUser);
@@ -62,7 +64,7 @@ export class UsersRoutes extends CommonRoutesConfig {
 
     this.app.patch('/v1/users/:userId/permissionFlags/:permissionFlags', [
       jwtMiddleware.checkValidToken,
-      permissionMiddleware.onlySameUserOrAdminCanAccess,
+      commonPermissionMiddleware.onlySameUserOrAdminCanAccess,
       usersMiddleware.pathchPermissionFlags,
       jwtMiddleware.getPermissionsAndId,
       authController.logIn,

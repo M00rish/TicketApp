@@ -16,7 +16,7 @@ class permissionMiddleware {
         const userPermissionFlag = parseInt(res.locals.jwt.permissionFlags);
 
         if (requiredPermissionFlags & userPermissionFlag) {
-          next();
+          return next();
         } else {
           const error = new AppError(
             true,
