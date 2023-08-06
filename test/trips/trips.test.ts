@@ -16,13 +16,6 @@ const firstUserBody = {
   lastName: 'testUserLastName',
 };
 
-const secondUserBody = {
-  email: `koo+${shortid.generate()}@gmail.com`,
-  password: '123qw',
-  firstName: 'sad',
-  lastName: 'nas',
-};
-
 const newFirstTrip = {
   startCity: 'Berlin',
   finishCity: 'Paris',
@@ -55,8 +48,10 @@ describe('trips endpoints', function () {
   });
 
   it('should allow a login to /login', async function () {
-    const response = await request.post('/v1/login').send(firstUserBody);
-    expect(response.status).to.equal(201);
+    const response = await request
+      .post('/v1/login')
+      .send({ email: firstUserBody.email, password: firstUserBody.password });
+    expect(response.status).to.equal(200);
     expect(response.body).not.to.be.empty;
     expect(response.body).to.be.an('Object');
     expect(response.body.accessToken).to.be.a('string');
@@ -64,19 +59,18 @@ describe('trips endpoints', function () {
   });
 
   describe('with a valid access token', function () {
-    it('should allow a POST to /v1/trips', async function () {
+    it('should not allow a POST to /v1/trips', async function () {
       const response = await request
         .post('/v1/trips')
         .set('Authorization', `Bearer ${accessToken}`)
         .send(newFirstTrip);
-      expect(response.status).to.equal(201);
+      expect(response.status).to.equal(401);
       expect(response.body).not.to.be.empty;
       expect(response.body).to.be.an('Object');
-      expect(response.body._id).to.be.a('string');
-      firstTripIdTest = response.body._id;
+      expect(response.body.error).to.be.a('string');
     });
 
-    it('should allow a GET from /v1/trips', async function () {
+    it('should allow a GET to /v1/trips', async function () {
       const response = await request
         .get('/v1/trips')
         .set('Authorization', `Bearer ${accessToken}`);
@@ -84,9 +78,11 @@ describe('trips endpoints', function () {
       expect(response.body).not.to.be.empty;
       expect(response.body).to.be.an('Array');
       expect(response.body[0]._id).to.be.a('string');
+
+      firstTripIdTest = response.body[0]._id;
     });
 
-    it('should allow a GET from /v1/trips/:tripId', async function () {
+    it('should allow a GET to /v1/trips/:tripId', async function () {
       const response = await request
         .get(`/v1/trips/${firstTripIdTest}`)
         .set('Authorization', `Bearer ${accessToken}`);
@@ -101,19 +97,154 @@ describe('trips endpoints', function () {
         .patch(`/v1/trips/${firstTripIdTest}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ startCity: 'Warsaw' });
-      expect(response.status).to.equal(403);
+      expect(response.status).to.equal(401);
       expect(response.body).not.to.be.empty;
       expect(response.body).to.be.an('Object');
-      // expect(response.body.message).to.be.a('string');
+      expect(response.body.error).to.be.a('string');
     });
 
     it('should not allow a DELETE to /v1/trips/:tripId', async function () {
       const response = await request
         .delete(`/v1/trips/${firstTripIdTest}`)
         .set('Authorization', `Bearer ${accessToken}`);
-      expect(response.status).to.equal(403);
+      expect(response.status).to.equal(401);
       expect(response.body).not.to.be.empty;
       expect(response.body).to.be.an('Object');
+      expect(response.body.error).to.be.a('string');
+    });
+
+    describe('with a valid access token and trip guide permissions', function () {
+      it('should allow a PATCH to /v1/users/:userId/permissionFlags/:permissionFlags', async function () {
+        const response = await request
+          .patch(`/v1/users/${firstUserIdTest}/permissionFlags/3`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({
+            permissionFlags: 3,
+          });
+        expect(response.status).to.equal(200);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Object');
+        expect(response.body.accessToken).to.be.a('string');
+
+        accessToken = response.body.accessToken;
+      });
+
+      it('should not allow a POST to /v1/trips', async function () {
+        const response = await request
+          .post('/v1/trips')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(newFirstTrip);
+        expect(response.status).to.equal(401);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Object');
+      });
+
+      it('should allow a PATCH to /v1/trips/:tripId', async function () {
+        const response = await request
+          .patch(`/v1/trips/${firstTripIdTest}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ startCity: 'Tanja' });
+        expect(response.status).to.equal(200);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Object');
+      });
+
+      it('should allow a GET to /v1/trips/:tripId', async function () {
+        const response = await request
+          .get(`/v1/trips/${firstTripIdTest}`)
+          .set('Authorization', `Bearer ${accessToken}`);
+        expect(response.status).to.equal(200);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Object');
+        expect(response.body._id).to.be.a('string');
+        expect(response.body.startCity).to.equal('Tanja');
+      });
+
+      it('should not allow a DELETE to /v1/trips/:tripId', async function () {
+        const response = await request
+          .delete(`/v1/trips/${firstTripIdTest}`)
+          .set('Authorization', `Bearer ${accessToken}`);
+        expect(response.status).to.equal(401);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Object');
+      });
+
+      it('should allow a GET to /v1/trips', async function () {
+        const response = await request
+          .get('/v1/trips')
+          .set('Authorization', `Bearer ${accessToken}`);
+        expect(response.status).to.equal(200);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Array');
+        expect(response.body[0]._id).to.be.a('string');
+      });
+    });
+
+    describe('with a valid access token and admin permissions', function () {
+      it('should allow a PATCH to /v1/users/:userId/permissionFlags/:permissionFlags', async function () {
+        const response = await request
+          .patch(`/v1/users/${firstUserIdTest}/permissionFlags/7`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({
+            permissionFlags: 7,
+          });
+        expect(response.status).to.equal(200);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Object');
+        expect(response.body.accessToken).to.be.a('string');
+
+        accessToken = response.body.accessToken;
+      });
+
+      it('should allow a POST to /v1/trips', async function () {
+        const response = await request
+          .post('/v1/trips')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(newFirstTrip);
+        expect(response.status).to.equal(201);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Object');
+        expect(response.body._id).to.be.a('string');
+        firstTripIdTest = response.body._id;
+      });
+
+      it('should allow a PATCH to /v1/trips/:tripId', async function () {
+        const response = await request
+          .patch(`/v1/trips/${firstTripIdTest}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({ startCity: 'Warsaw' });
+        expect(response.status).to.equal(200);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Object');
+      });
+
+      it('should allow a GET to /v1/trips/:tripId', async function () {
+        const response = await request
+          .get(`/v1/trips/${firstTripIdTest}`)
+          .set('Authorization', `Bearer ${accessToken}`);
+        expect(response.status).to.equal(200);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Object');
+        expect(response.body._id).to.be.a('string');
+        expect(response.body.startCity).to.equal('Warsaw');
+      });
+
+      it('should allow a DELETE to /v1/trips/:tripId', async function () {
+        const response = await request
+          .delete(`/v1/trips/${firstTripIdTest}`)
+          .set('Authorization', `Bearer ${accessToken}`);
+        expect(response.status).to.equal(204);
+      });
+
+      it('should allow a GET to /v1/trips', async function () {
+        const response = await request
+          .get('/v1/trips')
+          .set('Authorization', `Bearer ${accessToken}`);
+        expect(response.status).to.equal(200);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Array');
+        expect(response.body[0]._id).to.be.a('string');
+      });
     });
   });
 });

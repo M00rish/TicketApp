@@ -1,9 +1,10 @@
-import app, { appServer } from '../../src/app';
 import supertest from 'supertest';
 import { expect } from 'chai';
 import shortid from 'shortid';
-import mongooseService from '../../src/common/service/mongoose.service';
 import mongoose from 'mongoose';
+
+import app, { appServer } from '../../src/app';
+import mongooseService from '../../src/common/service/mongoose.service';
 
 let firstUserIdTest = '';
 let SecondUserIdTest = '';
@@ -51,8 +52,10 @@ describe('users and auth endpoints', function () {
   });
 
   it('should allow a POST to /login', async function () {
-    const response = await request.post('/v1/login').send(firstUserBody);
-    expect(response.status).to.equal(201);
+    const response = await request
+      .post('/v1/login')
+      .send({ email: firstUserBody.email, password: firstUserBody.password });
+    expect(response.status).to.equal(200);
     expect(response.body).not.to.be.empty;
     expect(response.body).to.be.an('Object');
     expect(response.body.accessToken).to.be.a('string');
@@ -67,7 +70,7 @@ describe('users and auth endpoints', function () {
         .set('Authorization', `Bearer ${accessToken}`)
         .send();
 
-      expect(response.status).to.equal(403);
+      expect(response.status).to.equal(401);
     });
 
     it('should allow a GET to /users/:userId ', async function () {
@@ -97,7 +100,7 @@ describe('users and auth endpoints', function () {
       expect(response.status).to.equal(204);
     });
 
-    it('should not allow a Patch to /users/:userId to change permission Flags for a user', async function () {
+    it('should not allow a PATCH to /users/:userId to change permission Flags for a user', async function () {
       const response = await request
         .patch(`/v1/users/${firstUserIdTest}`)
         .set('Authorization', `Bearer ${accessToken}`)
@@ -107,7 +110,7 @@ describe('users and auth endpoints', function () {
       expect(response.status).to.equal(403);
     });
 
-    it('should allow a Post to /refresh-token for a refreshtoken', async function () {
+    it('should allow a POST to /refresh-token for a refreshtoken', async function () {
       const response = await request
         .post(`/v1/refresh-token`)
         .set('Authorization', `Bearer ${accessToken}`)
@@ -115,7 +118,7 @@ describe('users and auth endpoints', function () {
         .send({ firstUserBody });
 
       expect(response.body).to.be.an('object');
-      expect(response.status).to.equal(201);
+      expect(response.status).to.equal(200);
       expect(response.body).to.be.not.be.empty;
       expect(response.body.accessToken).to.be.a('string');
 
@@ -145,16 +148,17 @@ describe('users and auth endpoints', function () {
       expect(response.body).to.be.an('object');
     });
 
-    it('should allow a patch to /users/:userId/permissionFlags/:permissionFlags', async function () {
+    it('should allow a PATCH to /users/:userId/permissionFlags/:permissionFlags', async function () {
       const response = await request
         .patch(`/v1/users/${firstUserIdTest}/permissionFlags/4`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
           permissionFlags: 4,
         });
-
-      expect(response.status).to.equal(201);
+      expect(response.status).to.equal(200);
       expect(response.body).to.be.an('object');
+      expect(response.body.accessToken).to.be.a('string');
+
       accessToken = response.body.accessToken;
     });
 
@@ -172,7 +176,7 @@ describe('users and auth endpoints', function () {
         SecondUserIdTest = response.body._id;
       });
 
-      it('should allow a patch to /users/:userId/ to change firstname and lastname for a user', async function () {
+      it('should allow a PATCH to /users/:userId/ to change firstname and lastname for a user', async function () {
         const response = await request
           .patch(`/v1/users/${SecondUserIdTest}`)
           .set('Authorization', `Bearer ${accessToken}`)
@@ -185,7 +189,7 @@ describe('users and auth endpoints', function () {
         expect(response.status).to.equal(204);
       });
 
-      it('should allow a get from /users/:userId to see the new firstname and lastname for a user', async function () {
+      it('should allow a GET to /users/:userId to see the new firstname and lastname for a user', async function () {
         const response = await request
           .get(`/v1/users/${SecondUserIdTest}`)
           .set('Authorization', `Bearer ${accessToken}`)

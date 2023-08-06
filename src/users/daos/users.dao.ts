@@ -6,6 +6,8 @@ import { CreateUserDto } from '../dtos/create.user.dto';
 import { PutUserDto } from '../dtos/put.user.dto';
 import { PatchUserDto } from '../dtos/patch.user.dto';
 import mongooseService from '../../common/service/mongoose.service';
+import AppError from '../../common/types/appError';
+import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 
 const log: debug.IDebugger = debug('app:users-dao');
 
@@ -15,74 +17,164 @@ class UsersDao {
   }
 
   async addUser(userFields: CreateUserDto) {
-    const userId = shortid.generate();
-    const user = new this.User({
-      _id: userId,
-      ...userFields,
-    });
+    try {
+      const userId = shortid.generate();
+      const user = new this.User({
+        _id: userId,
+        ...userFields,
+      });
 
-    await user.save();
-    return userId;
+      await user.save();
+      return userId;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async updateUserById(userId: string, userFields: PatchUserDto | PutUserDto) {
-    const existingUser = await this.User.findOneAndUpdate(
-      { _id: userId },
-      { $set: userFields },
-      { new: true }
-    ).exec();
+    try {
+      const user = await this.User.findById({ _id: userId }).exec();
+      if (!user)
+        throw new AppError(true, 'updateUserById_Error', 404, 'User not found');
 
-    return existingUser?._id;
+      const updatedUser = await this.User.findOneAndUpdate(
+        { _id: userId },
+        { $set: userFields },
+        { new: true }
+      ).exec();
+
+      if (!updatedUser)
+        throw new AppError(
+          true,
+          'updateUserById_Error',
+          HttpStatusCode.InternalServerError,
+          'Failed to update user'
+        );
+
+      return updatedUser._id;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getUserByEmail(email: string) {
-    return await this.User.findOne({ email: email }).exec();
+    try {
+      const user = await this.User.findOne({ email: email }).exec();
+      return user;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getUserById(userId: string) {
-    return await this.User.findOne({ _id: userId })
-      .select('-refreshToken -password')
-      .exec();
+    try {
+      const user = await this.User.findOne({ _id: userId })
+        .select('-refreshToken -password')
+        .exec();
+      return user;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getUsers(limit = 25, page = 0) {
-    return await this.User.find()
-      .limit(limit)
-      .skip(limit * page)
-      .exec();
+    try {
+      const users = await this.User.find()
+        .limit(limit)
+        .skip(limit * page)
+        .exec();
+      return users;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async removeUserById(userId: string) {
-    return await this.User.deleteOne({ _id: userId }).exec();
+    try {
+      const user = await this.User.deleteOne({ _id: userId }).exec();
+      if (user.deletedCount === 0)
+        throw new AppError(
+          true,
+          'removeUserById_Error',
+          404,
+          'User not found '
+        );
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getUserByEmailWithPassword(email: string) {
-    const user = await this.User.findOne({ email: email })
-      .select('_id email permissionFlags +password')
-      .exec();
-    return user;
+    try {
+      const user = await this.User.findOne({ email: email })
+        .select('_id email permissionFlags +password')
+        .exec();
+      if (!user)
+        throw new AppError(
+          true,
+          'getUserByEmailWithPassword_Error',
+          404,
+          'User not found'
+        );
+      return user;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getUserRefreshTokenById(userId: string) {
-    const refreshToken = await this.User.findOne({ _id: userId })
-      .select('refreshToken')
-      .exec();
-    return refreshToken;
+    try {
+      const refreshToken = await this.User.findOne({ _id: userId })
+        .select('refreshToken')
+        .exec();
+      if (!refreshToken)
+        throw new AppError(
+          true,
+          'getUserRefreshTokenById_Error',
+          404,
+          'User not found'
+        );
+
+      return refreshToken;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async updateUserRefreshTokenById(userId: string, refreshToken: string) {
-    await this.User.findOneAndUpdate(
-      { _id: userId },
-      { refreshToken },
-      { new: true }
-    ).exec();
+    try {
+      const user = await this.User.findById({ _id: userId }).exec();
+      if (!user)
+        throw new AppError(
+          true,
+          'updateUserRefreshTokenById_Error',
+          404,
+          'User not found'
+        );
+
+      const updatedUser = await this.User.findOneAndUpdate(
+        { _id: userId },
+        { refreshToken },
+        { new: true }
+      ).exec();
+
+      if (!updatedUser)
+        throw new AppError(
+          true,
+          'updateUserRefreshTokenById_Error',
+          HttpStatusCode.InternalServerError,
+          'Failed to update user'
+        );
+    } catch (error) {
+      throw error;
+    }
   }
 
   schema = mongooseService.getMongoose().Schema;
 
   userSchema = new this.schema(
     {
-      _id: String,
+      _id: { type: this.schema.Types.String },
       email: {
         type: String,
         unique: true,

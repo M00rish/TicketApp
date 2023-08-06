@@ -4,7 +4,6 @@ import bcrypt from 'bcryptjs';
 
 import usersService from '../services/users.service';
 import AppError from '../../common/types/appError';
-import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 
 const log: debug.IDebugger = debug('app:user-controller');
 
@@ -18,13 +17,11 @@ class UsersController {
       const users = await usersService.list(100, 0);
       res.status(200).json(users);
     } catch (error: any) {
-      error = new AppError(
-        false,
-        'listUsers_Error',
-        HttpStatusCode.BadRequest,
-        error.message
-      );
-      next(error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        res.status(500).json('Internal Server Error');
+      }
     }
   }
 
@@ -37,13 +34,11 @@ class UsersController {
       const user = await usersService.readById(req.body.id);
       res.status(200).json(user);
     } catch (error: any) {
-      error = new AppError(
-        false,
-        'getUserById_Error',
-        HttpStatusCode.BadRequest,
-        error.message
-      );
-      next(error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        res.status(500).json('Internal Server Error');
+      }
     }
   }
 
@@ -53,16 +48,14 @@ class UsersController {
     next: express.NextFunction
   ) {
     try {
-      const UserId: string = await usersService.create(req.body);
+      const UserId = await usersService.create(req.body);
       res.status(201).json({ _id: UserId });
     } catch (error: any) {
-      error = new AppError(
-        false,
-        'createUser_Error',
-        HttpStatusCode.BadRequest,
-        error.message
-      );
-      next(error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        res.status(500).json('Internal Server Error');
+      }
     }
   }
 
@@ -73,18 +66,18 @@ class UsersController {
   ) {
     try {
       if (req.body.password) {
+        //TODO: check if password is correct
         req.body.password = bcrypt.hashSync(req.body.password, 10);
       }
-
+      // TODO: check if body params are valid
       const UserId = await usersService.patchById(req.params.userId, req.body);
-      res.status(204).send({ _id: UserId });
+      res.status(204).json({ _id: UserId });
     } catch (error: any) {
-      error = new AppError(
-        false,
-        'patchUser_Error',
-        HttpStatusCode.BadRequest,
-        error.message
-      );
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        res.status(500).json('Internal Server Error');
+      }
       next(error);
     }
   }
@@ -96,15 +89,13 @@ class UsersController {
   ) {
     try {
       await usersService.deleteById(req.body.id);
-      res.status(204).json('User deleted');
+      res.status(204).json('User deleted successfully');
     } catch (error: any) {
-      error = new AppError(
-        false,
-        'removeUser_Error',
-        HttpStatusCode.BadRequest,
-        error.message
-      );
-      next(error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        res.status(500).json('Internal Server Error');
+      }
     }
   }
 }

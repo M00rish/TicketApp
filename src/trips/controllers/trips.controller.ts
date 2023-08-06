@@ -15,15 +15,19 @@ class TripsController {
   ) {
     try {
       const trips = await tripsService.list(100, 0);
-      res.status(200).json(trips);
+      res.status(HttpStatusCode.Ok).json(trips);
     } catch (error: any) {
-      error = new AppError(
-        false,
-        'listTrips_Error',
-        HttpStatusCode.BadRequest,
-        error.message
-      );
-      next(error);
+      if (error instanceof AppError) {
+        error = new AppError(
+          false,
+          'listTrips_Error',
+          HttpStatusCode.BadRequest,
+          error.message
+        );
+        next(error);
+      } else {
+        res.status(500).json('Internal Server Error');
+      }
     }
   }
 
@@ -46,13 +50,17 @@ class TripsController {
       }
       res.status(200).json(trip);
     } catch (error: any) {
-      error = new AppError(
-        false,
-        'getTripById_Error',
-        HttpStatusCode.BadRequest,
-        error.message
-      );
-      next(error);
+      if (error instanceof AppError) {
+        error = new AppError(
+          false,
+          'getTripById_Error',
+          HttpStatusCode.BadRequest,
+          error.message
+        );
+        next(error);
+      } else {
+        res.status(500).json('Internal Server Error');
+      }
     }
   }
 
@@ -63,15 +71,19 @@ class TripsController {
   ) {
     try {
       const tripId: string = await tripsService.create(req.body);
-      res.status(201).json({ _id: tripId });
+      return res.status(201).json({ _id: tripId });
     } catch (error: any) {
-      error = new AppError(
-        false,
-        'createTrip_Error',
-        HttpStatusCode.BadRequest,
-        error.message
-      );
-      next(error);
+      if (error instanceof AppError) {
+        error = new AppError(
+          false,
+          'createTrip_Error',
+          HttpStatusCode.BadRequest,
+          error.message
+        );
+        return next(error);
+      } else {
+        return res.status(500).json('Internal Server Error');
+      }
     }
   }
 
@@ -106,15 +118,19 @@ class TripsController {
         return next(error);
       }
 
-      res.status(200).json(trip);
+      res.status(200).json({ msg: 'Trip updated successfully' });
     } catch (error: any) {
-      error = new AppError(
-        false,
-        'updateTripById_Error',
-        HttpStatusCode.BadRequest,
-        error.message
-      );
-      next(error);
+      if (error instanceof AppError) {
+        error = new AppError(
+          false,
+          'updateTripById_Error',
+          HttpStatusCode.BadRequest,
+          error.message
+        );
+        next(error);
+      } else {
+        res.status(500).json('Internal Server Error');
+      }
     }
   }
 
@@ -126,15 +142,19 @@ class TripsController {
     const tripId = req.params.tripId;
     try {
       await tripsService.deleteById(tripId);
-      res.status(200).json('trip deleted');
+      res.status(204).json();
     } catch (error: any) {
-      error = new AppError(
-        false,
-        'deleteTripById_Error',
-        HttpStatusCode.BadRequest,
-        error.message
-      );
-      next(error);
+      if (error instanceof AppError) {
+        error = new AppError(
+          false,
+          'deleteTripById_Error',
+          HttpStatusCode.BadRequest,
+          error.message
+        );
+        next(error);
+      } else {
+        res.status(500).json('Internal Server Error');
+      }
     }
   }
 }

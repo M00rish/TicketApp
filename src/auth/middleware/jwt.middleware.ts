@@ -27,7 +27,6 @@ class JwtMiddleware {
             'you are not logged in,'
           );
           next(error);
-          return res.status(401).send();
         } else {
           res.locals.jwt = jwt.verify(
             authorization[1],

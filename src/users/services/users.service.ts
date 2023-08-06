@@ -6,39 +6,39 @@ import { CRUD } from '../../common/interfaces/crud.interface';
 
 class UserService implements CRUD {
   async create(resource: CreateUserDto) {
-    return UsersDao.addUser(resource);
+    return await UsersDao.addUser(resource);
   }
 
   async deleteById(id: string) {
-    return UsersDao.removeUserById(id);
+    return await UsersDao.removeUserById(id);
   }
 
   async list(limit: number, page: number) {
-    return UsersDao.getUsers(limit, page);
+    return await UsersDao.getUsers(limit, page);
   }
 
   async patchById(id: string, resource: PatchUserDto) {
-    return UsersDao.updateUserById(id, resource);
+    return await UsersDao.updateUserById(id, resource);
   }
 
   async readById(id: string) {
-    return UsersDao.getUserById(id);
+    return await UsersDao.getUserById(id);
   }
 
   async getUserByEmail(email: string) {
-    return UsersDao.getUserByEmail(email);
+    return await UsersDao.getUserByEmail(email);
   }
 
   async getUserByEmailWithPassword(email: string) {
-    return UsersDao.getUserByEmailWithPassword(email);
+    return await UsersDao.getUserByEmailWithPassword(email);
   }
 
   async getUserRefeshTokenById(id: string) {
-    return UsersDao.getUserRefreshTokenById(id);
+    return await UsersDao.getUserRefreshTokenById(id);
   }
 
   async updateUserRefreshTokenById(id: string, refreshToken: string) {
-    UsersDao.updateUserRefreshTokenById(id, refreshToken);
+    await UsersDao.updateUserRefreshTokenById(id, refreshToken);
   }
 }
 

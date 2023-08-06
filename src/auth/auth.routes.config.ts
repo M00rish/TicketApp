@@ -18,7 +18,7 @@ export class AuthRoutes extends CommonRoutesConfig {
       body('password')
         .isLength({ min: 5 })
         .withMessage('Must include password (5+ characters)'),
-      bodyValidationMiddleware.verifyBodyFieldsError,
+      bodyValidationMiddleware.verifyBodyFieldsError(['email', 'password']),
       authMiddleware.verifyUserPassword,
       authController.logIn,
     ]);

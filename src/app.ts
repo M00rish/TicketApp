@@ -11,6 +11,10 @@ import { CommonRoutesConfig } from './common/common.routes.config';
 import { UsersRoutes } from './users/users.routes.config';
 import { AuthRoutes } from './auth/auth.routes.config';
 import { TripsRoutes } from './trips/trips.routes.config';
+import { ReviewsRoutes } from './reviews/reviews.routes.config';
+import { BusesRoutes } from './buses/buses.routes.config';
+import { CitiesRoutes } from './cities/cities.routes.config';
+import { ticketsRoute } from './tickets/tickets.routes.config';
 import errorHandlerMiddleware from './common/middleware/error.handler.middleware';
 
 const app: express.Application = express();
@@ -56,6 +60,10 @@ app.use(expressWinston.logger(loggerOptions));
 routes.push(new UsersRoutes(app));
 routes.push(new AuthRoutes(app));
 routes.push(new TripsRoutes(app));
+routes.push(new ReviewsRoutes(app));
+routes.push(new BusesRoutes(app));
+routes.push(new CitiesRoutes(app));
+routes.push(new ticketsRoute(app));
 
 const startingMessage = `server is running on ${port}`;
 app.get('/', (req: express.Request, res: express.Response) => {

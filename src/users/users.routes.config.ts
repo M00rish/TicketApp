@@ -9,6 +9,7 @@ import jwtMiddleware from '../auth/middleware/jwt.middleware';
 import commonPermissionMiddleware from '../common/middleware/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
 import authController from '../auth/controllers/auth.controller';
+import imageUpdateMiddleware from '../common/middleware/image.update.middleware';
 
 export class UsersRoutes extends CommonRoutesConfig {
   constructor(app: express.Application) {
@@ -30,7 +31,14 @@ export class UsersRoutes extends CommonRoutesConfig {
         body('password')
           .isLength({ min: 5 })
           .withMessage('Must include password (5+ characters)'),
-        bodyValidationMiddleware.verifyBodyFieldsError,
+        bodyValidationMiddleware.verifyBodyFieldsError([
+          'id',
+          'email',
+          'password',
+          'firstName',
+          'lastName',
+          'image',
+        ]),
         usersMiddleware.validateSameEmailDoesntExist,
         usersController.createUser
       );
@@ -55,16 +63,24 @@ export class UsersRoutes extends CommonRoutesConfig {
         .optional(),
       body('firstName').isString().optional(),
       body('lastName').isString().optional(),
-      bodyValidationMiddleware.verifyBodyFieldsError,
+      bodyValidationMiddleware.verifyBodyFieldsError([
+        'id',
+        'email',
+        'password',
+        'firstName',
+        'lastName',
+        'image',
+        'permissionFlags',
+      ]),
       usersMiddleware.validatePatchEmail,
       usersMiddleware.userCannotChangePermission,
-      usersMiddleware.updateUserPhoto,
+      imageUpdateMiddleware.updateImage('user'),
       usersController.patchUser,
     ]);
 
     this.app.patch('/v1/users/:userId/permissionFlags/:permissionFlags', [
       jwtMiddleware.checkValidToken,
-      commonPermissionMiddleware.onlySameUserOrAdminCanAccess,
+      commonPermissionMiddleware.onlySameUserOrAdminCanAccess, // TODO: check the case where admin elevate another user to admin
       usersMiddleware.pathchPermissionFlags,
       jwtMiddleware.getPermissionsAndId,
       authController.logIn,

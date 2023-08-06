@@ -1,8 +1,8 @@
 {
   "scripts": {
     "start": "tsc && node --unhandled-rejections=strict ./dist/app.js",
-    "debug": "export DEBUG=* && mkdir -p ./dist/public/images && npm run start",
-    "create-assets-dir": "mkdir -p ./dist/public/images",
+    "add-assetsDir": "mkdir -p ./dist/public/users/images && mkdir -p ./dist/public/buses/images",
+    "debug": "export DEBUG=* && npm run add-assetsDir && npm run start",
     "test": "mocha --bail --require ts-node/register --require source-map-support/register  ./test/main.test.ts",
     "test:debug": "export DEBUG=* && npm run test",
     "dev": "nodemon"

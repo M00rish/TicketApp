@@ -2,6 +2,8 @@ import express from 'express';
 import { permissionsFlags } from '../enums/common.permissionflag.enum';
 import debug from 'debug';
 import AppError from '../types/appError';
+import HttpStatusCode from '../enums/HttpStatusCode.enum';
+import reviewsService from '../../reviews/services/reviews.service';
 
 const log: debug.IDebugger = debug('app:common-permission-middleware');
 
@@ -21,7 +23,7 @@ class permissionMiddleware {
           const error = new AppError(
             true,
             'permissionsFlagsRequired_Error',
-            403,
+            HttpStatusCode.Unauthorized,
             "you're not authorized to perform this operation"
           );
           next(error);
@@ -30,7 +32,7 @@ class permissionMiddleware {
         const error = new AppError(
           false,
           'permissionsFlagsRequired_Error',
-          403,
+          HttpStatusCode.InternalServerError,
           'Something went wrong!'
         );
         next(error);
@@ -49,7 +51,7 @@ class permissionMiddleware {
       req.params.userId &&
       req.params.userId === res.locals.jwt.userId
     ) {
-      next();
+      return next();
     } else {
       if (userPermissionFlag & permissionsFlags.ADMIN) {
         next();
@@ -57,11 +59,38 @@ class permissionMiddleware {
         const error = new AppError(
           true,
           'onlySameUserOrAdminCanAccess_Error',
-          403,
+          HttpStatusCode.Unauthorized,
           "you're not authorized to perform this operation"
         );
         next(error);
       }
+    }
+  }
+
+  async onlyAdminOrUserWhoCreatedReviewCanAccess(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
+    const userPermissionFlag = parseInt(res.locals.jwt.permissionFlags);
+    const reviewId = req.params.reviewId;
+    const userId = res.locals.jwt.userId;
+
+    if (userPermissionFlag & permissionsFlags.ADMIN) {
+      return next();
+    }
+
+    const review = await reviewsService.getReviewById(reviewId);
+    if (review.userId === userId) {
+      return next();
+    } else {
+      const error = new AppError(
+        true,
+        'onlyAdminOrUserWhoCreatedReviewCanAccess_Error',
+        HttpStatusCode.Unauthorized,
+        "you're not authorized to perform this operation"
+      );
+      next(error);
     }
   }
 }

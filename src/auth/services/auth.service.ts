@@ -35,7 +35,7 @@ class AuthService {
           sameSite: 'none',
           maxAge: 15 * 24 * 60 * 60 * 1000,
         })
-        .status(201)
+        .status(200)
         .send({ accessToken });
     } catch (err) {
       const error = new AppError(

@@ -16,13 +16,13 @@ export class TripsRoutes extends CommonRoutesConfig {
   configureRoutes(): express.Application {
     this.app
       .route(`/v1/trips`)
-      .all(
-        jwtMiddleware.checkValidToken,
+      .all(jwtMiddleware.checkValidToken)
+      .get([
         commonPermissionMiddleware.permissionsFlagsRequired(
           permissionsFlags.USER
-        )
-      )
-      .get(tripsController.listTrips)
+        ),
+        tripsController.listTrips,
+      ])
       .post([
         body('startCity').isString(),
         body('finishCity').isString(),
@@ -31,7 +31,18 @@ export class TripsRoutes extends CommonRoutesConfig {
         body('price').isNumeric(),
         body('seats').isNumeric(),
         body('busId').isString(),
-        bodyValidationMiddleware.verifyBodyFieldsError,
+        commonPermissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        ),
+        bodyValidationMiddleware.verifyBodyFieldsError([
+          'startCity',
+          'finishCity',
+          'startDate',
+          'finishDate',
+          'price',
+          'seats',
+          'busId',
+        ]),
         tripsController.createTrip,
       ]);
 
@@ -60,11 +71,21 @@ export class TripsRoutes extends CommonRoutesConfig {
       body('seats').isNumeric().optional(),
       body('busId').isString().optional(),
       commonPermissionMiddleware.permissionsFlagsRequired(
-        permissionsFlags.ADMIN
+        permissionsFlags.ADMIN | permissionsFlags.TRIP_GUIDE
       ),
-      bodyValidationMiddleware.verifyBodyFieldsError,
+      bodyValidationMiddleware.verifyBodyFieldsError([
+        'startCity',
+        'finishCity',
+        'startDate',
+        'finishDate',
+        'price',
+        'seats',
+        'busId',
+      ]),
       tripsController.patchTripById,
     ]);
+
+    this.app.put(`/v1/trips/search`, []); // TODO
 
     return this.app;
   }

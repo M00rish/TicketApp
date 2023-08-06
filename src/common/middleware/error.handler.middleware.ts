@@ -22,13 +22,24 @@ class errorHandler {
     res: express.Response,
     next: express.NextFunction
   ) => {
-    if (err.name == `VALIDATION_ERROR`) {
+    if (err.name === `VALIDATION_ERROR`) {
       const VALIDATION_ERROR = this.handleValidationErrors(err);
       res.status(err.statusCode).json({ error: VALIDATION_ERROR });
     } else {
       const ERROR_MESSAGE = this.handleErrors(err);
       res.status(err.statusCode).json({ error: ERROR_MESSAGE });
     }
+
+    // const error = new AppError(
+    //   false,
+    //   'errorHandler_Error',
+    //   500,
+    //   err.message || 'Internal Server Error'
+    // );
+
+    // const ERROR = this.handleErrors(error);
+
+    // res.status(error.statusCode).json({ error: ERROR });
   };
 }
 
