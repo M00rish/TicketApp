@@ -10,7 +10,7 @@ import bodyValidationMiddleware from '../common/middleware/body.validation.middl
 
 export class ReviewsRoutes extends CommonRoutesConfig {
   constructor(app: express.Application) {
-    super(app, 'TripReviews');
+    super(app, 'ReviewsRoutes');
   }
 
   configureRoutes(): express.Application {

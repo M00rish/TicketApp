@@ -10,7 +10,7 @@ import bodyValidationMiddleware from '../common/middleware/body.validation.middl
 
 export class CitiesRoutes extends CommonRoutesConfig {
   constructor(app: express.Application) {
-    super(app, 'busesRoutesConfig');
+    super(app, 'busesRoutes');
   }
 
   configureRoutes() {

@@ -8,7 +8,7 @@ import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
 
 export class ticketsRoute extends CommonRoutesConfig {
   constructor(app: express.Application) {
-    super(app, 'TicketsRoute');
+    super(app, 'TicketsRoutes');
   }
 
   configureRoutes() {
