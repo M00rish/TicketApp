@@ -5,6 +5,7 @@ import expressWinston from 'express-winston';
 import cors from 'cors';
 import debug from 'debug';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 
 import { CommonRoutesConfig } from './common/common.routes.config';
@@ -28,7 +29,6 @@ if (dotenvResults.error) {
   throw dotenvResults.error;
 }
 
-// add rate limiting middleware
 // app.use(rateLimit({ windowMs: 60 * 1000, max: 10 }));
 
 app.use(cors());
@@ -38,6 +38,8 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
+
+app.use(helmet());
 
 const loggerOptions: expressWinston.LoggerOptions = {
   transports: [new winston.transports.Console()],

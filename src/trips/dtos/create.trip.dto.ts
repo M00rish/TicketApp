@@ -1,8 +1,8 @@
 export interface CreateTripDto {
-  startCity: string;
-  finishCity: string;
-  startDate: Date;
-  finishDate: Date;
+  departureCity: string;
+  arrivalCity: string;
+  departureTime: Date;
+  arrivalTime: Date;
   price: number;
   seats: number;
   busId: string;

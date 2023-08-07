@@ -17,10 +17,10 @@ const firstUserBody = {
 };
 
 const newFirstTrip = {
-  startCity: 'Berlin',
-  finishCity: 'Paris',
-  startDate: '2021-01-01T00:00:00.000Z',
-  finishDate: '2021-01-01T08:00:00.000Z',
+  departureCity: 'Berlin',
+  arrivalCity: 'Paris',
+  departureTime: '2021-01-01T00:00:00.000Z',
+  arrivalTime: '2021-01-01T08:00:00.000Z',
   price: 100,
   seats: 50,
   busId: '1',
@@ -143,7 +143,8 @@ describe('trips endpoints', function () {
         const response = await request
           .patch(`/v1/trips/${firstTripIdTest}`)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({ startCity: 'Tanja' });
+          .send({ departureCity: 'Tanja' });
+
         expect(response.status).to.equal(200);
         expect(response.body).not.to.be.empty;
         expect(response.body).to.be.an('Object');
@@ -212,7 +213,7 @@ describe('trips endpoints', function () {
         const response = await request
           .patch(`/v1/trips/${firstTripIdTest}`)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({ startCity: 'Warsaw' });
+          .send({ departureCity: 'Taza' });
         expect(response.status).to.equal(200);
         expect(response.body).not.to.be.empty;
         expect(response.body).to.be.an('Object');
@@ -226,7 +227,7 @@ describe('trips endpoints', function () {
         expect(response.body).not.to.be.empty;
         expect(response.body).to.be.an('Object');
         expect(response.body._id).to.be.a('string');
-        expect(response.body.startCity).to.equal('Warsaw');
+        expect(response.body.departureCity).to.equal('Taza');
       });
 
       it('should allow a DELETE to /v1/trips/:tripId', async function () {

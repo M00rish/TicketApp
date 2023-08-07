@@ -10,8 +10,8 @@ class TicketsController {
     try {
       const tripId = req.params.tripId;
       const userId = res.locals.jwt.userId;
-      const ticket = await ticketsService.createTicket(tripId, userId);
-      res.status(201).json({ ticket });
+      const ticketId = await ticketsService.createTicket(tripId, userId);
+      res.status(201).json({ _id: ticketId });
     } catch (error) {
       next(error);
     }
@@ -37,11 +37,6 @@ class TicketsController {
     next: express.NextFunction
   ) {
     try {
-      //   const limit =
-      //     req.query.limit && req.query.limit <= 100
-      //       ? parseInt(req.query.limit)
-      //       : 10;
-      //   const page = 0;
       const tickets = await ticketsService.getTickets(10, 0);
       res.status(200).json({ tickets });
     } catch (error) {

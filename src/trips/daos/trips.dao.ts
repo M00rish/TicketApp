@@ -1,11 +1,14 @@
 import debug from 'debug';
 import { millisecondsToMinutes } from 'date-fns';
+import shortid from 'shortid';
 
 import mongooseService from '../../common/service/mongoose.service';
-import shortid from 'shortid';
+import citiesDao from '../../cities/daos/cities.dao';
+import busesDao from '../../buses/daos/buses.dao';
 import { CreateTripDto } from '../dtos/create.trip.dto';
 import { PatchTripDto } from '../dtos/patch.trips.dto';
 import AppError from '../../common/types/appError';
+import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 
 const log: debug.IDebugger = debug('app:trips-dao');
 
@@ -87,13 +90,49 @@ class TripsDao {
     }
   }
 
+  async updateBookedSeats(tripId: string) {
+    try {
+      const trip = await this.Trip.findById(tripId).exec();
+
+      if (!trip)
+        throw new AppError(
+          false,
+          'updateBookedSeats_Error',
+          HttpStatusCode.NotFound,
+          'Trip not found'
+        );
+
+      if (trip.bookedSeats === trip.seats)
+        throw new AppError(
+          false,
+          'updateBookedSeats_Error',
+          HttpStatusCode.BadRequest,
+          'No seats available'
+        );
+
+      trip.bookedSeats += 1;
+
+      await trip.save();
+    } catch (error) {
+      throw error;
+    }
+  }
+
   schema = mongooseService.getMongoose().Schema;
 
   tripSchema = new this.schema(
     {
       _id: { type: this.schema.Types.String },
-      startCity: { type: String, required: true }, // ref: 'Cities'
-      finishCity: { type: String, required: true }, // ref: 'Cities'
+      departureCity: {
+        type: this.schema.Types.String,
+        ref: citiesDao.city,
+        required: true,
+      },
+      arrivalCity: {
+        type: this.schema.Types.String,
+        ref: citiesDao.city,
+        required: true,
+      },
       departureTime: { type: Date, required: true },
       arrivalTime: { type: Date, required: true },
       duration: String,
@@ -115,8 +154,12 @@ class TripsDao {
         default: 0,
         min: 0,
         max: [50, 'seats must be below 50'],
-      }, // TODO: add static method to update bookedSeats
-      busId: { type: String, required: true }, //  ref: 'Buses'
+      },
+      busId: {
+        type: this.schema.Types.String,
+        ref: busesDao.Bus,
+        required: true,
+      },
     },
     { id: false, timestamps: true }
   ).pre('save', function (next) {

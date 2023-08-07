@@ -82,6 +82,7 @@ class TripsController {
         );
         return next(error);
       } else {
+        log('error', error);
         return res.status(500).json('Internal Server Error');
       }
     }

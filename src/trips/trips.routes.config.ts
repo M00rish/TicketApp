@@ -24,10 +24,10 @@ export class TripsRoutes extends CommonRoutesConfig {
         tripsController.listTrips,
       ])
       .post([
-        body('startCity').isString(),
-        body('finishCity').isString(),
-        body('startDate').isString(),
-        body('finishDate').isString(),
+        body('departureCity').isString(),
+        body('arrivalCity').isString(),
+        body('departureTime').isString(),
+        body('arrivalTime').isString(),
         body('price').isNumeric(),
         body('seats').isNumeric(),
         body('busId').isString(),
@@ -35,10 +35,10 @@ export class TripsRoutes extends CommonRoutesConfig {
           permissionsFlags.ADMIN
         ),
         bodyValidationMiddleware.verifyBodyFieldsError([
-          'startCity',
-          'finishCity',
-          'startDate',
-          'finishDate',
+          'departureCity',
+          'arrivalCity',
+          'departureTime',
+          'arrivalTime',
           'price',
           'seats',
           'busId',
@@ -63,10 +63,10 @@ export class TripsRoutes extends CommonRoutesConfig {
       ]);
 
     this.app.patch(`/v1/trips/:tripId`, [
-      body('startCity').isString().optional(),
-      body('finishCity').isString().optional(),
-      body('startDate').isDate().optional(),
-      body('finishDate').isDate().optional(),
+      body('departureCity').isString().optional(),
+      body('arrivalCity').isString().optional(),
+      body('departureTime').isDate().optional(),
+      body('arrivalTime').isDate().optional(),
       body('price').isNumeric().optional(),
       body('seats').isNumeric().optional(),
       body('busId').isString().optional(),
@@ -74,10 +74,10 @@ export class TripsRoutes extends CommonRoutesConfig {
         permissionsFlags.ADMIN | permissionsFlags.TRIP_GUIDE
       ),
       bodyValidationMiddleware.verifyBodyFieldsError([
-        'startCity',
-        'finishCity',
-        'startDate',
-        'finishDate',
+        'departureCity',
+        'arrivalCity',
+        'departureTime',
+        'arrivalTime',
         'price',
         'seats',
         'busId',

@@ -25,11 +25,7 @@ export class CitiesRoutes extends CommonRoutesConfig {
       .get([citiesController.listcities])
       .post([
         body('cityName').isString(),
-        body('location').isString(),
-        bodyValidationMiddleware.verifyBodyFieldsError([
-          'cityName',
-          'location',
-        ]),
+        bodyValidationMiddleware.verifyBodyFieldsError(['cityName']),
         citiesController.addcity,
       ]);
 
@@ -45,10 +41,7 @@ export class CitiesRoutes extends CommonRoutesConfig {
       .patch([
         body('cityName').isString().optional(),
         body('location').isString().optional(),
-        bodyValidationMiddleware.verifyBodyFieldsError([
-          'cityName',
-          'location',
-        ]),
+        bodyValidationMiddleware.verifyBodyFieldsError(['cityName']),
         imageUpdateMiddleware.updateImage('bus'),
         citiesController.updatecity,
       ])

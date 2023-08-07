@@ -5,8 +5,9 @@ import shortid from 'shortid';
 import mongooseService from '../../src/common/service/mongoose.service';
 import mongoose from 'mongoose';
 
+let firstTicketIdTest = '';
+let firstTripIdTest = '';
 let firstUserIdTest = '';
-let firstcityIdTest = '';
 let accessToken = '';
 
 const firstUserBody = {
@@ -16,11 +17,17 @@ const firstUserBody = {
   lastName: 'testUserLastName',
 };
 
-const newFirstCity = {
-  cityName: 'testCityName',
+const newFirstTrip = {
+  departureCity: 'Berlin',
+  arrivalCity: 'Paris',
+  departureTime: '2021-01-01T00:00:00.000Z',
+  arrivalTime: '2021-01-01T08:00:00.000Z',
+  price: 100,
+  seats: 50,
+  busId: '1',
 };
 
-describe('city endpoints', function () {
+describe('tickets endpoints', function () {
   let request: supertest.SuperAgentTest;
   before(function () {
     mongooseService.connectWithRetry();
@@ -52,20 +59,15 @@ describe('city endpoints', function () {
     accessToken = response.body.accessToken;
   });
 
-  describe('with a valid token', function () {
-    it('should not allow a POST to /cities', async function () {
-      const response = await request
-        .post('/v1/cities')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send(newFirstCity);
-      expect(response.status).to.equal(401);
-      expect(response.body).not.to.be.empty;
-      expect(response.body).to.be.an('Object');
-    });
+  it('should not allow a GET to /v1/tickets', async function () {
+    const response = await request.get('/v1/tickets').send();
+    expect(response.status).to.equal(401);
+    expect(response.body).not.to.be.empty;
+    expect(response.body).to.be.an('Object');
   });
 
-  describe('with a valid token and permissions', function () {
-    it('should allow a PATCH to /users/:userId/permissionFlags/:permissionFlags', async function () {
+  describe('with valid access token and admin permissions', function () {
+    it('should allow a PATCH to /v1/users/:userId/permissionFlags/:permissionFlags', async function () {
       const response = await request
         .patch(`/v1/users/${firstUserIdTest}/permissionFlags/7`)
         .set('Authorization', `Bearer ${accessToken}`)
@@ -73,53 +75,69 @@ describe('city endpoints', function () {
           permissionFlags: 7,
         });
       expect(response.status).to.equal(200);
-      expect(response.body).to.be.an('object');
+      expect(response.body).not.to.be.empty;
+      expect(response.body).to.be.an('Object');
       expect(response.body.accessToken).to.be.a('string');
 
       accessToken = response.body.accessToken;
     });
 
-    it('should allow a POST to /cities', async function () {
+    it('should allow a POST to /v1/trips', async function () {
       const response = await request
-        .post('/v1/cities')
+        .post('/v1/trips')
         .set('Authorization', `Bearer ${accessToken}`)
-        .send(newFirstCity);
+        .send(newFirstTrip);
       expect(response.status).to.equal(201);
       expect(response.body).not.to.be.empty;
       expect(response.body).to.be.an('Object');
       expect(response.body._id).to.be.a('string');
-      firstcityIdTest = response.body._id;
+      firstTripIdTest = response.body._id;
     });
 
-    it('should allow a GET from /cities', async function () {
+    it('should allow a POST to /v1/trips/tripId/tickets', async function () {
       const response = await request
-        .get('/v1/cities')
-        .set('Authorization', `Bearer ${accessToken}`);
-      expect(response.status).to.equal(200);
-      expect(response.body).not.to.be.empty;
-    });
-
-    it('should allow a PATCH to /cities/:cityId', async function () {
-      const response = await request
-        .patch(`/v1/cities/${firstcityIdTest}`)
+        .post(`/v1/trips/${firstTripIdTest}/tickets`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ cityName: 'fes' });
-      expect(response.status).to.equal(200);
+        .send();
+      expect(response.status).to.equal(201);
       expect(response.body).not.to.be.empty;
+      expect(response.body).to.be.an('Object');
+      expect(response.body._id).to.be.a('string');
+
+      firstTicketIdTest = response.body._id;
     });
 
-    it('should allow a GET from /cities/:cityId', async function () {
+    it('should allow a GET to /v1/tickets', async function () {
       const response = await request
-        .get(`/v1/cities/${firstcityIdTest}`)
+        .get('/v1/tickets')
         .set('Authorization', `Bearer ${accessToken}`);
       expect(response.status).to.equal(200);
       expect(response.body).not.to.be.empty;
-      expect(response.body.cityName).to.equal('fes');
+      expect(response.body).to.be.an('Object');
     });
 
-    it('should allow a DELETE to /cities/:cityId', async function () {
+    it('should allow a GET to /v1/tickets/:ticketId', async function () {
       const response = await request
-        .delete(`/v1/cities/${firstcityIdTest}`)
+        .get(`/v1/tickets/${firstTicketIdTest}`)
+        .set('Authorization', `Bearer ${accessToken}`);
+      expect(response.status).to.equal(200);
+      expect(response.body).not.to.be.empty;
+      expect(response.body).to.be.an('Object');
+    });
+
+    it('should allow a PATCH to /v1/tickets/:ticketId', async function () {
+      const response = await request
+        .patch(`/v1/tickets/${firstTicketIdTest}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ price: 200 });
+      expect(response.status).to.equal(200);
+      expect(response.body).not.to.be.empty;
+      expect(response.body).to.be.an('Object');
+    });
+
+    it('should allow a DELETE to /v1/tickets/:ticketId', async function () {
+      const response = await request
+        .delete(`/v1/tickets/${firstTicketIdTest}`)
         .set('Authorization', `Bearer ${accessToken}`);
       expect(response.status).to.equal(204);
     });

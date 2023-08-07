@@ -100,14 +100,17 @@ class citiesDao {
   citySchema = new this.schema(
     {
       _id: this.schema.Types.String,
-      cityName: { type: String, required: true },
+      cityName: {
+        type: String,
+        unique: true,
+        required: true,
+      },
       location: String,
-      image: String,
     },
     { id: false, timestamps: true }
   );
 
-  city = mongooseService.getMongoose().model('cityes', this.citySchema);
+  city = mongooseService.getMongoose().model('City', this.citySchema);
 }
 
 export default new citiesDao();
