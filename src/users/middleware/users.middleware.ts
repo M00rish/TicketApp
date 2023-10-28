@@ -1,7 +1,5 @@
 import express from 'express';
 import debug from 'debug';
-import multer from 'multer';
-import path from 'path';
 
 import usersService from '../services/users.service';
 import AppError from '../../common/types/appError';
@@ -22,7 +20,7 @@ class UsersMiddleware {
     } else {
       const error = new AppError(
         true,
-        'validateSameEmailDoesntExist_Error',
+        'validateSameEmailDoesntExistError',
         HttpStatusCode.BadRequest,
         'user email already exist'
       );
@@ -41,7 +39,7 @@ class UsersMiddleware {
     } else {
       const error = new AppError(
         true,
-        'validateSameEmailBelongToSameUser_Error',
+        'validateSameEmailBelongToSameUserError',
         HttpStatusCode.BadRequest,
         'invalid email'
       );
@@ -66,14 +64,14 @@ class UsersMiddleware {
     res: express.Response,
     next: express.NextFunction
   ) {
-    const user = await usersService.readById(req.body.id);
+    const user = await usersService.getById(req.body.id);
     if (user) {
       res.locals.user = user;
       next();
     } else {
       const error = new AppError(
         true,
-        'validateUserExists_Error',
+        'RessourceNotFoundError',
         HttpStatusCode.NotFound,
         'user not found'
       );
@@ -101,23 +99,14 @@ class UsersMiddleware {
     ) {
       const error = new AppError(
         true,
-        'userCannotChangePermission_Error',
+        'permissionFlagsError',
         HttpStatusCode.Forbidden,
-        'you cannot change permission levels'
+        'you cannot change permissions'
       );
       next(error);
     } else {
       next();
     }
-  }
-
-  async pathchPermissionFlags(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) {
-    await usersService.patchById(req.body.id, req.body);
-    next();
   }
 }
 

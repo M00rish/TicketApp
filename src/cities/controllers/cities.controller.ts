@@ -40,7 +40,7 @@ class cityController {
   ) {
     const cityId = req.params.cityId;
     try {
-      const city = await citiesService.readById(cityId);
+      const city = await citiesService.getById(cityId);
       if (!city) {
         const error = new AppError(
           false,
@@ -100,7 +100,7 @@ class cityController {
   ) {
     const cityId = req.params.cityId;
     try {
-      const city = await citiesService.patchById(cityId, req.body);
+      const city = await citiesService.updateById(cityId, req.body);
       if (!city) {
         const error = new AppError(
           false,

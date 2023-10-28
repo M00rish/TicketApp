@@ -15,11 +15,11 @@ class citiesService implements CRUD {
     return await citiesDao.getcityes();
   }
 
-  async patchById(cityId: string, resource: PatchcityDto) {
+  async updateById(cityId: string, resource: PatchcityDto) {
     return await citiesDao.updatecityById(cityId, resource);
   }
 
-  async readById(resourceId: string) {
+  async getById(resourceId: string) {
     return await citiesDao.getcityById(resourceId);
   }
 }

@@ -8,9 +8,15 @@ class TicketsController {
     next: express.NextFunction
   ) {
     try {
-      const tripId = req.params.tripId;
-      const userId = res.locals.jwt.userId;
-      const ticketId = await ticketsService.createTicket(tripId, userId);
+      const tripId: String = req.params.tripId;
+      const userId: String = res.locals.jwt.userId;
+      const seatNumber: Number = Number(req.params.seatNumber);
+      const ressource = {
+        tripId,
+        userId,
+        seatNumber,
+      };
+      const ticketId = await ticketsService.create(ressource);
       res.status(201).json({ _id: ticketId });
     } catch (error) {
       next(error);
@@ -24,7 +30,7 @@ class TicketsController {
   ) {
     try {
       const ticketId = req.params.ticketId;
-      const ticket = await ticketsService.getTicketById(ticketId);
+      const ticket = await ticketsService.getById(ticketId);
       res.status(200).json({ ticket });
     } catch (error) {
       next(error);
@@ -37,7 +43,7 @@ class TicketsController {
     next: express.NextFunction
   ) {
     try {
-      const tickets = await ticketsService.getTickets(10, 0);
+      const tickets = await ticketsService.list(10, 0);
       res.status(200).json({ tickets });
     } catch (error) {
       next(error);
@@ -52,10 +58,7 @@ class TicketsController {
     try {
       const ticketId = req.params.ticketId;
       const ticketUpdate = req.body;
-      const ticket = await ticketsService.updateTicketById(
-        ticketId,
-        ticketUpdate
-      );
+      const ticket = await ticketsService.updateById(ticketId, ticketUpdate);
       res.status(200).json({ ticket });
     } catch (error) {
       next(error);
@@ -69,7 +72,20 @@ class TicketsController {
   ) {
     try {
       const ticketId = req.params.ticketId;
-      await ticketsService.deleteTicketById(ticketId);
+      await ticketsService.deleteById(ticketId);
+      res.status(204).json();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteAllTickets(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
+    try {
+      await ticketsService.deleteAllTickets();
       res.status(204).json();
     } catch (error) {
       next(error);

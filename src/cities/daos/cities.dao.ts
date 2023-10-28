@@ -16,7 +16,7 @@ class citiesDao {
   async addcity(cityFields: CreateCityDto) {
     try {
       const cityId = shortid.generate();
-      const city = new this.city({
+      const city = new this.City({
         _id: cityId,
         ...cityFields,
       });
@@ -30,7 +30,7 @@ class citiesDao {
 
   async getcityById(cityId: string) {
     try {
-      const city = await this.city.findById(cityId).exec();
+      const city = await this.City.findById(cityId).exec();
       if (!city)
         throw new AppError(
           true,
@@ -46,7 +46,7 @@ class citiesDao {
 
   async getcityes() {
     try {
-      const cityes = await this.city.find().exec();
+      const cityes = await this.City.find().exec();
       if (!cityes)
         throw new AppError(
           true,
@@ -62,7 +62,7 @@ class citiesDao {
 
   async updatecityById(cityId: string, cityFields: PatchcityDto) {
     try {
-      const city = await this.city.findById(cityId).exec();
+      const city = await this.City.findById(cityId).exec();
       if (!city)
         throw new AppError(
           true,
@@ -80,7 +80,7 @@ class citiesDao {
 
   async removecityById(cityId: string) {
     try {
-      const city = await this.city.findById(cityId).exec();
+      const city = await this.City.findById(cityId).exec();
       if (!city)
         throw new AppError(
           true,
@@ -90,6 +90,23 @@ class citiesDao {
         );
       await city.remove();
       return cityId;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getcityByName(name: string) {
+    try {
+      const CityName = this.City.findOne({ cityName: name }).exec();
+      if (!CityName)
+        throw new AppError(
+          true,
+          'getcityByName_Error',
+          HttpStatusCode.NotFound,
+          'city not found'
+        );
+
+      return CityName;
     } catch (error) {
       throw error;
     }
@@ -110,7 +127,7 @@ class citiesDao {
     { id: false, timestamps: true }
   );
 
-  city = mongooseService.getMongoose().model('City', this.citySchema);
+  City = mongooseService.getMongoose().model('City', this.citySchema);
 }
 
 export default new citiesDao();

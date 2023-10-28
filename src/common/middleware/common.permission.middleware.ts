@@ -16,31 +16,24 @@ class permissionMiddleware {
     ) => {
       try {
         const userPermissionFlag = parseInt(res.locals.jwt.permissionFlags);
-
         if (requiredPermissionFlags & userPermissionFlag) {
           return next();
         } else {
           const error = new AppError(
             true,
-            'permissionsFlagsRequired_Error',
+            'permissionFlagsError',
             HttpStatusCode.Unauthorized,
             "you're not authorized to perform this operation"
           );
           next(error);
         }
       } catch (err) {
-        const error = new AppError(
-          false,
-          'permissionsFlagsRequired_Error',
-          HttpStatusCode.InternalServerError,
-          'Something went wrong!'
-        );
-        next(error);
+        next(err);
       }
     };
   }
 
-  async onlySameUserOrAdminCanAccess(
+  onlySameUserOrAdminCanAccess(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
@@ -58,7 +51,7 @@ class permissionMiddleware {
       } else {
         const error = new AppError(
           true,
-          'onlySameUserOrAdminCanAccess_Error',
+          'permissionFlagsError',
           HttpStatusCode.Unauthorized,
           "you're not authorized to perform this operation"
         );
@@ -80,13 +73,13 @@ class permissionMiddleware {
       return next();
     }
 
-    const review = await reviewsService.getReviewById(reviewId);
+    const review = await reviewsService.getById(reviewId);
     if (review.userId === userId) {
       return next();
     } else {
       const error = new AppError(
         true,
-        'onlyAdminOrUserWhoCreatedReviewCanAccess_Error',
+        'permissionFlagsError',
         HttpStatusCode.Unauthorized,
         "you're not authorized to perform this operation"
       );

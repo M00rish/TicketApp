@@ -3,6 +3,9 @@ import multer from 'multer';
 import HttpStatusCode from '../enums/HttpStatusCode.enum';
 import path from 'path';
 import AppError from '../types/appError';
+import debug from 'debug';
+
+const log: debug.IDebugger = debug('app:image-update-middleware');
 
 class imageUpdateMiddleware {
   updateImage =
@@ -12,16 +15,17 @@ class imageUpdateMiddleware {
       res: express.Response,
       next: express.NextFunction
     ) => {
-      let assetsFolderPath;
+      log(req.body);
+      let imagesFolderPath;
 
       if (ressource === 'user')
-        assetsFolderPath = path.join(__dirname, '../../public/users/images');
+        imagesFolderPath = path.join(__dirname, '../../public/users/images');
       else if (ressource === 'bus')
-        assetsFolderPath = path.join(__dirname, '../../public/buses/images');
+        imagesFolderPath = path.join(__dirname, '../../public/buses/images');
 
       const storage = multer.diskStorage({
         destination: function (req, file, cb) {
-          cb(null, assetsFolderPath);
+          cb(null, imagesFolderPath);
         },
         filename: function (req, file, cb) {
           const extension = file.mimetype.split('/')[1];

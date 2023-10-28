@@ -177,6 +177,18 @@ class ReviewsDao {
     }
   }
 
+  async listReviews(limit = 25, page = 0) {
+    try {
+      const reviews = await this.Review.find()
+        .limit(limit)
+        .skip(limit * page)
+        .exec();
+      return reviews;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async updateTripRating(tripId: string) {
     const reviews = await this.Review.find({ tripId: tripId }).exec();
     if (reviews.length === 0) {

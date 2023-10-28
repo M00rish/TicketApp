@@ -67,7 +67,7 @@ class ReviewsController {
   ) {
     const reviewId = req.params.reviewId;
     try {
-      const review = await reviewsService.getReviewById(reviewId);
+      const review = await reviewsService.getById(reviewId);
       res.status(HttpStatusCode.Ok).json(review);
     } catch (error: any) {
       if (error instanceof AppError) {
@@ -95,7 +95,7 @@ class ReviewsController {
     reviewFields.tripId = req.params.tripId;
     reviewFields.userId = res.locals.jwt.userId;
     try {
-      const reviewId = await reviewsService.createReview(reviewFields);
+      const reviewId = await reviewsService.create(reviewFields);
       res.status(HttpStatusCode.Created).json({ _id: reviewId });
     } catch (error: any) {
       if (error instanceof AppError) {
@@ -122,10 +122,7 @@ class ReviewsController {
     const reviewId = req.params.reviewId;
     const reviewFields = req.body;
     try {
-      const review = await reviewsService.updateReviewById(
-        reviewId,
-        reviewFields
-      );
+      const review = await reviewsService.updateById(reviewId, reviewFields);
       res.status(HttpStatusCode.NoContent).json({ _id: review });
     } catch (error: any) {
       if (error instanceof AppError) {
@@ -151,7 +148,7 @@ class ReviewsController {
   ) {
     const reviewId = req.params.reviewId;
     try {
-      await reviewsService.removeReviewById(reviewId);
+      await reviewsService.deleteById(reviewId);
       res.status(HttpStatusCode.NoContent).json();
     } catch (error: any) {
       if (error instanceof AppError) {

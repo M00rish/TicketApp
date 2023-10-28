@@ -40,7 +40,7 @@ class BusController {
   ) {
     const busId = req.params.busId;
     try {
-      const bus = await busesService.readById(busId);
+      const bus = await busesService.getById(busId);
       if (!bus) {
         const error = new AppError(
           false,
@@ -100,7 +100,7 @@ class BusController {
   ) {
     const busId = req.params.busId;
     try {
-      const bus = await busesService.patchById(busId, req.body);
+      const bus = await busesService.updateById(busId, req.body);
       if (!bus) {
         const error = new AppError(
           false,

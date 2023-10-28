@@ -2,6 +2,7 @@ import supertest from 'supertest';
 import { expect } from 'chai';
 import shortid from 'shortid';
 import mongoose from 'mongoose';
+import mocha from 'mocha';
 
 import app, { appServer } from '../../src/app';
 import mongooseService from '../../src/common/service/mongoose.service';
@@ -71,6 +72,7 @@ describe('users and auth endpoints', function () {
         .send();
 
       expect(response.status).to.equal(401);
+      expect(response.body).to.be.an('object');
     });
 
     it('should allow a GET to /users/:userId ', async function () {
@@ -150,19 +152,29 @@ describe('users and auth endpoints', function () {
 
     it('should allow a PATCH to /users/:userId/permissionFlags/:permissionFlags', async function () {
       const response = await request
-        .patch(`/v1/users/${firstUserIdTest}/permissionFlags/4`)
+        .patch(`/v1/users/${firstUserIdTest}/permissionFlags/7`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          permissionFlags: 4,
-        });
+        .send();
       expect(response.status).to.equal(200);
       expect(response.body).to.be.an('object');
-      expect(response.body.accessToken).to.be.a('string');
 
       accessToken = response.body.accessToken;
     });
 
     describe('with an admin permission flag', function () {
+      it('should allow a POST to /login', async function () {
+        const response = await request.post('/v1/login').send({
+          email: firstUserBody.email,
+          password: firstUserBody.password,
+        });
+        expect(response.status).to.equal(200);
+        expect(response.body).not.to.be.empty;
+        expect(response.body).to.be.an('Object');
+        expect(response.body.accessToken).to.be.a('string');
+        accessToken = response.body.accessToken;
+        refreshToken = response.headers['set-cookie'][0];
+      });
+
       it('should allow a POST to /users', async function () {
         const response = await request
           .post('/v1/users')
@@ -183,7 +195,6 @@ describe('users and auth endpoints', function () {
           .send({
             firstName: newFirstName2,
             lastName: newLastName2,
-            // permissionFlags: 2, to test the tripguide permission flag
           });
 
         expect(response.status).to.equal(204);

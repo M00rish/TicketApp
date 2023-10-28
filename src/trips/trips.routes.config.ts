@@ -24,68 +24,64 @@ export class TripsRoutes extends CommonRoutesConfig {
         tripsController.listTrips,
       ])
       .post([
+        commonPermissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        ),
         body('departureCity').isString(),
         body('arrivalCity').isString(),
         body('departureTime').isString(),
         body('arrivalTime').isString(),
         body('price').isNumeric(),
-        body('seats').isNumeric(),
         body('busId').isString(),
-        commonPermissionMiddleware.permissionsFlagsRequired(
-          permissionsFlags.ADMIN
-        ),
         bodyValidationMiddleware.verifyBodyFieldsError([
           'departureCity',
           'arrivalCity',
           'departureTime',
           'arrivalTime',
           'price',
-          'seats',
           'busId',
         ]),
         tripsController.createTrip,
+      ])
+      .delete([
+        commonPermissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        ),
+        tripsController.deleteAllTrips,
       ]);
 
     this.app
       .route(`/v1/trips/:tripId`)
-      .all([
-        jwtMiddleware.checkValidToken,
-        commonPermissionMiddleware.permissionsFlagsRequired(
-          permissionsFlags.USER
-        ),
-      ])
+      .all([jwtMiddleware.checkValidToken])
       .get(tripsController.getTripById)
       .delete([
         commonPermissionMiddleware.permissionsFlagsRequired(
           permissionsFlags.ADMIN
         ),
-        tripsController.removeTripById,
+        tripsController.deleteTripById,
+      ])
+      .patch([
+        commonPermissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.TRIP_GUIDE
+        ),
+        body('departureCity').isString().optional(),
+        body('arrivalCity').isString().optional(),
+        body('departureTime').isString().optional(),
+        body('arrivalTime').isString().optional(),
+        body('price').isNumeric().optional(),
+        body('busId').isString().optional(),
+        bodyValidationMiddleware.verifyBodyFieldsError([
+          'departureCity',
+          'arrivalCity',
+          'departureTime',
+          'arrivalTime',
+          'price',
+          'busId',
+        ]),
+        tripsController.patchTripById,
       ]);
 
-    this.app.patch(`/v1/trips/:tripId`, [
-      body('departureCity').isString().optional(),
-      body('arrivalCity').isString().optional(),
-      body('departureTime').isDate().optional(),
-      body('arrivalTime').isDate().optional(),
-      body('price').isNumeric().optional(),
-      body('seats').isNumeric().optional(),
-      body('busId').isString().optional(),
-      commonPermissionMiddleware.permissionsFlagsRequired(
-        permissionsFlags.ADMIN | permissionsFlags.TRIP_GUIDE
-      ),
-      bodyValidationMiddleware.verifyBodyFieldsError([
-        'departureCity',
-        'arrivalCity',
-        'departureTime',
-        'arrivalTime',
-        'price',
-        'seats',
-        'busId',
-      ]),
-      tripsController.patchTripById,
-    ]);
-
-    this.app.put(`/v1/trips/search`, []); // TODO
+    this.app.post(`/v1/trips/search`, []); // TODO
 
     return this.app;
   }

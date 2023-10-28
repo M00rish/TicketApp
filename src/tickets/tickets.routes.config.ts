@@ -1,10 +1,12 @@
 import express from 'express';
+import { body } from 'express-validator';
 
 import { CommonRoutesConfig } from '../common/common.routes.config';
 import ticketsController from './controllers/tickets.controller';
 import jwtMiddleware from '../auth/middleware/jwt.middleware';
 import commonPermissionMiddleware from '../common/middleware/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
+import bodyValidationMiddleware from '../common/middleware/body.validation.middleware';
 
 export class ticketsRoute extends CommonRoutesConfig {
   constructor(app: express.Application) {
@@ -20,7 +22,8 @@ export class ticketsRoute extends CommonRoutesConfig {
           permissionsFlags.ADMIN
         )
       )
-      .get(ticketsController.getTickets);
+      .get(ticketsController.getTickets)
+      .delete(ticketsController.deleteAllTickets);
 
     this.app
       .route(`/v1/tickets/:ticketId`)
@@ -31,11 +34,15 @@ export class ticketsRoute extends CommonRoutesConfig {
         )
       )
       .get(ticketsController.getTicketById)
-      .patch(ticketsController.updateTicketById)
+      .patch([
+        body('status').isString(),
+        bodyValidationMiddleware.verifyBodyFieldsError(['status']),
+        ticketsController.updateTicketById,
+      ])
       .delete(ticketsController.deleteTicketById);
 
     this.app
-      .route(`/v1/trips/:tripId/tickets`)
+      .route(`/v1/trips/:tripId/tickets/:seatNumber`)
       .all(jwtMiddleware.checkValidToken)
       .post(ticketsController.createTicket);
 

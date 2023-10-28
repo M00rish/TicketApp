@@ -8,7 +8,6 @@ import usersMiddleware from './middleware/users.middleware';
 import jwtMiddleware from '../auth/middleware/jwt.middleware';
 import commonPermissionMiddleware from '../common/middleware/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
-import authController from '../auth/controllers/auth.controller';
 import imageUpdateMiddleware from '../common/middleware/image.update.middleware';
 
 export class UsersRoutes extends CommonRoutesConfig {
@@ -53,7 +52,7 @@ export class UsersRoutes extends CommonRoutesConfig {
         commonPermissionMiddleware.onlySameUserOrAdminCanAccess
       )
       .get(usersController.getUserById)
-      .delete(usersController.removeUser);
+      .delete(usersController.deleteUser);
 
     this.app.patch('/v1/users/:userId', [
       body('email').isEmail().optional(),
@@ -74,16 +73,16 @@ export class UsersRoutes extends CommonRoutesConfig {
       ]),
       usersMiddleware.validatePatchEmail,
       usersMiddleware.userCannotChangePermission,
-      imageUpdateMiddleware.updateImage('user'),
-      usersController.patchUser,
+      imageUpdateMiddleware.updateImage('user'), //TODO: wrong field names are not handled when sent through the form
+      usersController.patchUserById,
     ]);
 
     this.app.patch('/v1/users/:userId/permissionFlags/:permissionFlags', [
       jwtMiddleware.checkValidToken,
-      commonPermissionMiddleware.onlySameUserOrAdminCanAccess, // TODO: check the case where admin elevate another user to admin
-      usersMiddleware.pathchPermissionFlags,
-      jwtMiddleware.getPermissionsAndId,
-      authController.logIn,
+      commonPermissionMiddleware.permissionsFlagsRequired(
+        permissionsFlags.USER
+      ),
+      usersController.pathchPermissionFlags,
     ]);
 
     return this.app;

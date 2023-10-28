@@ -3,6 +3,4 @@ export interface CreateUserDto {
   password: string;
   firstName?: string;
   lastName?: string;
-  permissionFlags?: string;
-  refreshToken?: string;
 }

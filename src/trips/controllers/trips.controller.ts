@@ -17,17 +17,7 @@ class TripsController {
       const trips = await tripsService.list(100, 0);
       res.status(HttpStatusCode.Ok).json(trips);
     } catch (error: any) {
-      if (error instanceof AppError) {
-        error = new AppError(
-          false,
-          'listTrips_Error',
-          HttpStatusCode.BadRequest,
-          error.message
-        );
-        next(error);
-      } else {
-        res.status(500).json('Internal Server Error');
-      }
+      next(error);
     }
   }
 
@@ -38,29 +28,10 @@ class TripsController {
   ) {
     const tripId = req.params.tripId;
     try {
-      const trip = await tripsService.readById(tripId);
-      if (!trip) {
-        const error = new AppError(
-          false,
-          'getTripById_Error',
-          HttpStatusCode.NotFound,
-          'Trip not found'
-        );
-        return next(error);
-      }
-      res.status(200).json(trip);
+      const trip = await tripsService.getById(tripId);
+      res.status(HttpStatusCode.Ok).json(trip);
     } catch (error: any) {
-      if (error instanceof AppError) {
-        error = new AppError(
-          false,
-          'getTripById_Error',
-          HttpStatusCode.BadRequest,
-          error.message
-        );
-        next(error);
-      } else {
-        res.status(500).json('Internal Server Error');
-      }
+      next(error);
     }
   }
 
@@ -70,21 +41,10 @@ class TripsController {
     next: express.NextFunction
   ) {
     try {
-      const tripId: string = await tripsService.create(req.body);
+      const tripId = await tripsService.create(req.body);
       return res.status(201).json({ _id: tripId });
     } catch (error: any) {
-      if (error instanceof AppError) {
-        error = new AppError(
-          false,
-          'createTrip_Error',
-          HttpStatusCode.BadRequest,
-          error.message
-        );
-        return next(error);
-      } else {
-        log('error', error);
-        return res.status(500).json('Internal Server Error');
-      }
+      next(error);
     }
   }
 
@@ -96,46 +56,29 @@ class TripsController {
     const tripId = req.params.tripId;
     try {
       if (req.body.duration || req.body.ratings || req.body.bookedSeats) {
+        const errorMessage = `you're not allowed to change the following fields:${
+          req.body.duration ? ' duration ' : ''
+        }${req.body.ratings ? 'ratings ' : ''}${
+          req.body.bookedSeats ? 'bookedSeats' : ''
+        }`;
+
         const error = new AppError(
           true,
-          'patchTripById_Error',
+          'patchTripError',
           HttpStatusCode.BadRequest,
-          `you're not allowed to change the following fields:${
-            req.body.duration ? ' duration ' : ''
-          }${req.body.ratings ? 'ratings ' : ''}${
-            req.body.bookedSeats ? 'bookedSeats' : ''
-          }`
-        );
-        return next(error);
-      }
-      const trip = await tripsService.patchById(tripId, req.body);
-      if (!trip) {
-        const error = new AppError(
-          false,
-          'patchTripById_Error',
-          HttpStatusCode.NotFound,
-          'Trip not found'
+          errorMessage
         );
         return next(error);
       }
 
-      res.status(200).json({ msg: 'Trip updated successfully' });
+      await tripsService.updateById(tripId, req.body);
+      res.status(200).json({ _id: tripId });
     } catch (error: any) {
-      if (error instanceof AppError) {
-        error = new AppError(
-          false,
-          'updateTripById_Error',
-          HttpStatusCode.BadRequest,
-          error.message
-        );
-        next(error);
-      } else {
-        res.status(500).json('Internal Server Error');
-      }
+      next(error);
     }
   }
 
-  async removeTripById(
+  async deleteTripById(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
@@ -145,17 +88,20 @@ class TripsController {
       await tripsService.deleteById(tripId);
       res.status(204).json();
     } catch (error: any) {
-      if (error instanceof AppError) {
-        error = new AppError(
-          false,
-          'deleteTripById_Error',
-          HttpStatusCode.BadRequest,
-          error.message
-        );
-        next(error);
-      } else {
-        res.status(500).json('Internal Server Error');
-      }
+      next(error);
+    }
+  }
+
+  async deleteAllTrips(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
+    try {
+      await tripsService.deleteAll();
+      res.status(204).json();
+    } catch (error: any) {
+      next(error);
     }
   }
 }

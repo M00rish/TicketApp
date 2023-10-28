@@ -16,7 +16,7 @@ class UsersDao {
     log('created new instance of UsersDao');
   }
 
-  async addUser(userFields: CreateUserDto) {
+  async createUser(userFields: CreateUserDto) {
     try {
       const userId = shortid.generate();
       const user = new this.User({
@@ -35,7 +35,12 @@ class UsersDao {
     try {
       const user = await this.User.findById({ _id: userId }).exec();
       if (!user)
-        throw new AppError(true, 'updateUserById_Error', 404, 'User not found');
+        throw new AppError(
+          true,
+          'RessourceNotFoundError',
+          HttpStatusCode.NotFound,
+          'User not found'
+        );
 
       const updatedUser = await this.User.findOneAndUpdate(
         { _id: userId },
@@ -45,8 +50,8 @@ class UsersDao {
 
       if (!updatedUser)
         throw new AppError(
-          true,
-          'updateUserById_Error',
+          false,
+          'updateUserError',
           HttpStatusCode.InternalServerError,
           'Failed to update user'
         );
@@ -71,13 +76,22 @@ class UsersDao {
       const user = await this.User.findOne({ _id: userId })
         .select('-refreshToken -password')
         .exec();
+
+      if (!user)
+        throw new AppError(
+          true,
+          'RessourceNotFoundError',
+          HttpStatusCode.NotFound,
+          'User not found'
+        );
+
       return user;
     } catch (error) {
-      throw error;
+      return error;
     }
   }
 
-  async getUsers(limit = 25, page = 0) {
+  async listUsers(limit = 25, page = 0) {
     try {
       const users = await this.User.find()
         .limit(limit)
@@ -85,20 +99,23 @@ class UsersDao {
         .exec();
       return users;
     } catch (error) {
-      throw error;
+      return error;
     }
   }
 
-  async removeUserById(userId: string) {
+  async deleteUserById(userId: string) {
     try {
-      const user = await this.User.deleteOne({ _id: userId }).exec();
-      if (user.deletedCount === 0)
+      const user = await this.User.findById({ _id: userId }).exec();
+
+      if (!user)
         throw new AppError(
           true,
-          'removeUserById_Error',
-          404,
-          'User not found '
+          'RessourceNotFoundError',
+          HttpStatusCode.NotFound,
+          'User not found'
         );
+
+      await this.User.deleteOne({ _id: userId }).exec();
     } catch (error) {
       throw error;
     }
@@ -112,10 +129,11 @@ class UsersDao {
       if (!user)
         throw new AppError(
           true,
-          'getUserByEmailWithPassword_Error',
-          404,
-          'User not found'
+          'RessourceNotFoundError',
+          HttpStatusCode.NotFound,
+          'User not found '
         );
+
       return user;
     } catch (error) {
       throw error;
@@ -130,9 +148,9 @@ class UsersDao {
       if (!refreshToken)
         throw new AppError(
           true,
-          'getUserRefreshTokenById_Error',
-          404,
-          'User not found'
+          'RessourceNotFoundError',
+          HttpStatusCode.NotFound,
+          'User not found '
         );
 
       return refreshToken;
@@ -147,9 +165,9 @@ class UsersDao {
       if (!user)
         throw new AppError(
           true,
-          'updateUserRefreshTokenById_Error',
-          404,
-          'User not found'
+          'RessourceNotFoundError',
+          HttpStatusCode.NotFound,
+          'User not found '
         );
 
       const updatedUser = await this.User.findOneAndUpdate(
@@ -160,8 +178,8 @@ class UsersDao {
 
       if (!updatedUser)
         throw new AppError(
-          true,
-          'updateUserRefreshTokenById_Error',
+          false,
+          'updateUserRefreshTokenError',
           HttpStatusCode.InternalServerError,
           'Failed to update user'
         );

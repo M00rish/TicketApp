@@ -1,8 +1,9 @@
+import { CRUD } from '../../common/interfaces/crud.interface';
 import reviewsDao from '../daos/reviews.dao';
 import { CreateReviewDto } from '../dtos/create.review.dto';
 import { PatchReviewDto } from '../dtos/patch.review.dto';
 
-class ReviewsService {
+class ReviewsService implements CRUD {
   async getReviewsByTripId(tripId: string) {
     return await reviewsDao.getReviewsByTripId(tripId);
   }
@@ -11,20 +12,24 @@ class ReviewsService {
     return await reviewsDao.getReviewsByUserId(userId);
   }
 
-  async getReviewById(reviewId: string) {
+  async getById(reviewId: string) {
     return await reviewsDao.getReviewById(reviewId);
   }
 
-  async createReview(reviewFields: CreateReviewDto) {
+  async create(reviewFields: CreateReviewDto) {
     return await reviewsDao.addReview(reviewFields);
   }
 
-  async updateReviewById(reviewId: string, reviewFields: PatchReviewDto) {
+  async updateById(reviewId: string, reviewFields: PatchReviewDto) {
     return await reviewsDao.updateReviewById(reviewId, reviewFields);
   }
 
-  async removeReviewById(reviewId: string) {
+  async deleteById(reviewId: string) {
     return await reviewsDao.removeReviewById(reviewId);
+  }
+
+  async list() {
+    return await reviewsDao.listReviews();
   }
 
   async removeReviewsByTripId(tripId: string) {

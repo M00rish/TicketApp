@@ -16,7 +16,7 @@ import { ReviewsRoutes } from './reviews/reviews.routes.config';
 import { BusesRoutes } from './buses/buses.routes.config';
 import { CitiesRoutes } from './cities/cities.routes.config';
 import { ticketsRoute } from './tickets/tickets.routes.config';
-import errorHandlerMiddleware from './common/middleware/error.handler.middleware';
+import ErrorHandler from './common/middleware/error.handler.middleware';
 
 const app: express.Application = express();
 const server: http.Server = http.createServer(app);
@@ -35,9 +35,7 @@ app.use(cors());
 
 app.use(express.json({ limit: '10kb' }));
 
-app.use(express.json());
-
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 
 app.use(helmet());
 
@@ -72,7 +70,7 @@ app.get('/', (req: express.Request, res: express.Response) => {
   res.status(200).send(startingMessage);
 });
 
-app.use(errorHandlerMiddleware.errorHandler);
+app.use(ErrorHandler.handle);
 
 export default app;
 

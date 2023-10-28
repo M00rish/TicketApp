@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 import debug from 'debug';
 import rateLimit from 'express-rate-limit';
 
-import usersService from '../../users/services/users.service';
 import { Jwt } from '../../common/types/jwt';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
@@ -22,7 +21,7 @@ class JwtMiddleware {
         if (authorization[0] !== 'Bearer') {
           const error = new AppError(
             true,
-            'NO_TOKEN_ERROR',
+            'NoTokenError',
             HttpStatusCode.Unauthorized,
             'you are not logged in,'
           );
@@ -36,18 +35,12 @@ class JwtMiddleware {
           next();
         }
       } catch (err) {
-        const error = new AppError(
-          true,
-          'INVALID_TOKEN_ERROR',
-          HttpStatusCode.Unauthorized,
-          'Something went wrong... please login again'
-        );
-        next(error);
+        next(err);
       }
     } else {
       const error = new AppError(
         true,
-        'NO_TOKEN_ERROR',
+        'NoTokenError',
         HttpStatusCode.Unauthorized,
         'you are not logged in'
       );
@@ -71,20 +64,14 @@ class JwtMiddleware {
       } else {
         const error = new AppError(
           true,
-          'INVALID_REFRESH_TOKEN_ERROR',
+          'InvalidRefreshTokenError',
           HttpStatusCode.Unauthorized,
           'Invalid refresh token'
         );
         next(error);
       }
     } catch (err) {
-      const error = new AppError(
-        false,
-        'REFRESH_TOKEN_ERROR',
-        HttpStatusCode.Unauthorized,
-        'Something went wrong...'
-      );
-      next(error);
+      return next(err);
     }
   }
 
@@ -103,31 +90,6 @@ class JwtMiddleware {
       const error = new AppError(
         false,
         'PREPARE_BODY_ERROR',
-        HttpStatusCode.Unauthorized,
-        'Something went wrong...'
-      );
-      next(error);
-    }
-  }
-
-  async getPermissionsAndId(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) {
-    try {
-      const user: any = await usersService.readById(res.locals.jwt.userId);
-      if (user) {
-        req.body = {
-          userId: user._id,
-          permissionFlags: user.permissionFlags,
-        };
-      }
-      next();
-    } catch (err) {
-      const error = new AppError(
-        false,
-        'GET_PERMISSIONS_AND_ID_ERROR',
         HttpStatusCode.Unauthorized,
         'Something went wrong...'
       );

@@ -38,12 +38,12 @@ class bodyValidationMiddleware {
       if (errors.length) {
         const error = new AppError(
           true,
-          'VALIDATION_ERROR',
+          'InputValidationError',
           HttpStatusCode.BadRequest,
           JSON.stringify(errors)
         );
 
-        return next(error);
+        throw error;
       }
 
       next(); // TODO: to be improved -> should do the body validation here as well as fieldnames validation?

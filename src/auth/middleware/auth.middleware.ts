@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 
 import usersService from '../../users/services/users.service';
 import AppError from '../../common/types/appError';
+import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 
 const log: debug.IDebugger = debug('app:Auth-Middlware');
 
@@ -13,6 +14,7 @@ class AuthMiddlware {
     res: express.Response,
     next: express.NextFunction
   ) {
+    log('verifyUserPassword', req.body.email);
     const user: any = await usersService.getUserByEmailWithPassword(
       req.body.email
     );
@@ -32,7 +34,7 @@ class AuthMiddlware {
     const error = new AppError(
       true,
       'LOGIN_ERROR',
-      400,
+      HttpStatusCode.NotFound,
       'Invalid email and/or password'
     );
 

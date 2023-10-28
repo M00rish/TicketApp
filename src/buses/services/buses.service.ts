@@ -15,11 +15,11 @@ class BusService implements CRUD {
     return await busesDao.getBuses();
   }
 
-  async patchById(busId: string, resource: PatchBusDto) {
+  async updateById(busId: string, resource: PatchBusDto) {
     return await busesDao.updateBusById(busId, resource);
   }
 
-  async readById(resourceId: string) {
+  async getById(resourceId: string) {
     return await busesDao.getBusById(resourceId);
   }
 }

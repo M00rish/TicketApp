@@ -3,7 +3,7 @@ import debug from 'debug';
 import bcrypt from 'bcryptjs';
 
 import usersService from '../services/users.service';
-import AppError from '../../common/types/appError';
+import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 
 const log: debug.IDebugger = debug('app:user-controller');
 
@@ -17,11 +17,7 @@ class UsersController {
       const users = await usersService.list(100, 0);
       res.status(200).json(users);
     } catch (error: any) {
-      if (error instanceof AppError) {
-        next(error);
-      } else {
-        res.status(500).json('Internal Server Error');
-      }
+      next(error);
     }
   }
 
@@ -31,14 +27,11 @@ class UsersController {
     next: express.NextFunction
   ) {
     try {
-      const user = await usersService.readById(req.body.id);
+      log(req.body);
+      const user = await usersService.getById(req.body.id);
       res.status(200).json(user);
     } catch (error: any) {
-      if (error instanceof AppError) {
-        next(error);
-      } else {
-        res.status(500).json('Internal Server Error');
-      }
+      next(error);
     }
   }
 
@@ -51,15 +44,11 @@ class UsersController {
       const UserId = await usersService.create(req.body);
       res.status(201).json({ _id: UserId });
     } catch (error: any) {
-      if (error instanceof AppError) {
-        next(error);
-      } else {
-        res.status(500).json('Internal Server Error');
-      }
+      next(error);
     }
   }
 
-  async patchUser(
+  async patchUserById(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
@@ -70,32 +59,39 @@ class UsersController {
         req.body.password = bcrypt.hashSync(req.body.password, 10);
       }
       // TODO: check if body params are valid
-      const UserId = await usersService.patchById(req.params.userId, req.body);
-      res.status(204).json({ _id: UserId });
+      const UserId = await usersService.updateById(req.params.userId, req.body);
+      res.status(HttpStatusCode.Ok).json({ _id: UserId });
     } catch (error: any) {
-      if (error instanceof AppError) {
-        next(error);
-      } else {
-        res.status(500).json('Internal Server Error');
-      }
-      next(error);
+      return next(error);
     }
   }
 
-  async removeUser(
+  async deleteUser(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
     try {
       await usersService.deleteById(req.body.id);
-      res.status(204).json('User deleted successfully');
+      res.status(HttpStatusCode.NoContent).json();
     } catch (error: any) {
-      if (error instanceof AppError) {
-        next(error);
-      } else {
-        res.status(500).json('Internal Server Error');
-      }
+      next(error);
+    }
+  }
+
+  async pathchPermissionFlags(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
+    const permissionflag = parseInt(req.params.permissionFlags);
+    req.body.permissionFlags = permissionflag;
+
+    try {
+      const userId = await usersService.updateById(req.body.id, req.body);
+      if (userId) res.status(HttpStatusCode.Ok).send({ _id: userId });
+    } catch (error: any) {
+      next(error);
     }
   }
 }

@@ -5,36 +5,67 @@ import mongooseService from '../../common/service/mongoose.service';
 import AppError from '../../common/types/appError';
 import usersDao from '../../users/daos/users.dao';
 import tripsDao from '../../trips/daos/trips.dao';
+import busesDao from '../../buses/daos/buses.dao';
 import { PatchTicketDto } from '../dtos/patch.ticket.dto';
 import { CreateTicketDto } from '../dtos/create.ticket.dto';
+import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 
 const log: debug.IDebugger = debug('app:trips-dao');
 
 class TicketsDao {
-  async createTicket(tripId, userId) {
+  async createTicket(seatNumber: number, tripId: string, userId: string) {
     try {
-      const user = await usersDao.getUserById(userId);
-      const trip = await tripsDao.getTripById(tripId);
-
-      if (!user || !trip) {
-        throw new AppError(false, 'createTicket_Error', 404, 'trip not found');
+      if (!seatNumber || !tripId || !userId) {
+        throw new AppError(
+          true,
+          'InvalidInputError',
+          HttpStatusCode.BadRequest,
+          'Invalid input provided'
+        );
       }
 
+      const [user, trip] = await Promise.all([
+        usersDao.getUserById(userId),
+        tripsDao.getTripById(tripId),
+      ]);
+
+      if (!user || !trip) {
+        throw new AppError(
+          true,
+          'ResourceNotFoundError',
+          HttpStatusCode.NotFound,
+          'User or trip not found'
+        );
+      }
+
+      if (trip.departureTime < new Date()) {
+        throw new AppError(
+          true,
+          'TripTimeExpiredError',
+          HttpStatusCode.BadRequest,
+          'Trip has started already'
+        );
+      }
+
+      await this.validateSeatNumber(seatNumber, trip);
+
+      const ticketId = shortid.generate();
       const ticketData: CreateTicketDto = {
+        //@ts-ignore
         userId: user._id,
         tripId: trip._id,
-        seatNumber: trip.seats - trip.bookedSeats,
+        seatNumber: seatNumber,
         price: trip.price,
       };
 
-      const ticketId = shortid.generate();
       const ticket = new this.Ticket({
         _id: ticketId,
         ...ticketData,
       });
 
       await ticket.save();
-      await tripsDao.updateBookedSeats(tripId);
+      await tripsDao.updateBookedSeats(tripId, seatNumber);
+
       return ticketId;
     } catch (error) {
       throw error;
@@ -47,8 +78,8 @@ class TicketsDao {
       if (!ticket) {
         throw new AppError(
           true,
-          'getTicketById_Error',
-          404,
+          'RessourceNotFoundError',
+          HttpStatusCode.BadRequest,
           'Ticket not found'
         );
       }
@@ -72,27 +103,30 @@ class TicketsDao {
 
   async updateTicketById(ticketId: string, ticketFields: PatchTicketDto) {
     try {
-      const ticket = await this.Ticket.findById({ _id: ticketId }).exec();
-      if (!ticket) {
+      if (!ticketFields.status)
         throw new AppError(
           true,
-          'updateTicketById_Error',
-          404,
-          'Ticket not found'
+          'updateTicketError',
+          HttpStatusCode.BadRequest,
+          'status is required'
         );
+
+      const ticket = await this.Ticket.findById({ _id: ticketId }).exec();
+      if (!ticket) {
+        throw new AppError(true, 'updateTicketError', 404, 'Ticket not found');
       }
 
       const updatedTicket = await this.Ticket.findOneAndUpdate(
         { _id: ticketId },
-        { $set: ticketFields },
-        { new: true }
+        { status: ticketFields.status },
+        { new: true, runValidators: true }
       ).exec();
 
       if (!updatedTicket) {
         throw new AppError(
           false,
-          'updateTicketById_Error',
-          500,
+          'updateTicketError',
+          HttpStatusCode.InternalServerError,
           'Failed to update ticket'
         );
       }
@@ -105,41 +139,85 @@ class TicketsDao {
 
   async deleteTicketById(ticketId: string) {
     try {
-      const ticket = await this.Ticket.deleteOne({ _id: ticketId }).exec();
-      if (ticket.deletedCount === 0) {
+      const ticket = await this.Ticket.findById({ _id: ticketId }).exec();
+      if (!ticket) {
         throw new AppError(
           true,
-          'deleteTicketById_Error',
-          404,
+          'RessourceNotFoundError',
+          HttpStatusCode.NotFound,
           'Ticket not found'
         );
       }
+
+      await this.Ticket.deleteOne({
+        _id: ticketId,
+      }).exec();
+      await tripsDao.removeBookedSeat(ticket.tripId, ticket.seatNumber);
     } catch (error) {
       throw error;
     }
   }
 
-  generateTicketData = async (tripId: string, userId: string) => {
+  async deleteTicketsByTripId(tripId: string) {
     try {
-      const user = await usersDao.getUserById(userId);
-      const trip = await tripsDao.getTripById(tripId);
-
-      if (!user || !trip) {
-        throw new AppError(false, 'createTicket_Error', 404, 'trip not found');
-      }
-
-      const ticketData: CreateTicketDto = {
-        userId: user._id,
-        tripId: trip._id,
-        seatNumber: trip.seats - trip.bookedSeats,
-        price: trip.price,
-      };
-
-      return ticketData;
+      await this.Ticket.deleteMany({ tripId: tripId }).exec();
     } catch (error) {
       throw error;
     }
-  };
+  }
+
+  async deleteAllTickets() {
+    try {
+      await this.Ticket.deleteMany({}).exec();
+      tripsDao.resetBookedSeatsForAllTrips();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async validateSeatNumber(seatNumber: number, trip) {
+    const bus = await busesDao.getBusById(trip.busId);
+    if (seatNumber > bus.seats || seatNumber < 1) {
+      throw new AppError(
+        true,
+        'InvalidSeatNumberError',
+        HttpStatusCode.BadRequest,
+        'Invalid seat number'
+      );
+    }
+    if (trip.bookedSeats.length === bus.seats) {
+      throw new AppError(
+        true,
+        'NoSeatsError',
+        HttpStatusCode.BadRequest,
+        'No seats left'
+      );
+    }
+    if (trip.bookedSeats.includes(seatNumber)) {
+      throw new AppError(
+        true,
+        'SeatAlreadyBookedError',
+        HttpStatusCode.BadRequest,
+        'Seat already booked'
+      );
+    }
+  }
+
+  async updateTicketStatusByTrip(tripId: string) {
+    const tickets = await this.Ticket.find({
+      tripId: tripId,
+      status: 'active',
+    }).exec();
+    if (!tickets) return;
+
+    await Promise.all(
+      tickets.map(async (ticket) => {
+        await this.Ticket.findByIdAndUpdate(ticket._id, {
+          status: 'expired',
+        }).exec();
+      })
+    );
+  }
 
   schema = mongooseService.getMongoose().Schema;
 
@@ -151,7 +229,7 @@ class TicketsDao {
       seatNumber: { type: Number, required: true },
       status: {
         type: String,
-        enum: ['active', 'canceled', 'completed'],
+        enum: ['active', 'canceled', 'expired'],
         default: 'active',
       },
       price: { type: Number, required: true },

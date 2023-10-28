@@ -101,7 +101,12 @@ class BusesDao {
     {
       _id: this.schema.Types.String,
       busModel: { type: String, required: true },
-      seats: { type: Number, required: true },
+      seats: {
+        type: Number,
+        min: [2, 'seats can not be less than 10'],
+        max: [50, 'seats can not be more than 50'],
+        required: true,
+      },
       busType: String,
       image: String,
     },

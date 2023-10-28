@@ -8,16 +8,22 @@ class TripService implements CRUD {
     return await tripsDaos.addTrip(resource);
   }
   async deleteById(id: string) {
-    return await tripsDaos.removeTripById(id);
+    return await tripsDaos.deleteTripById(id);
   }
   async list(limit: number, page: number) {
     return await tripsDaos.listTrips(limit, page);
   }
-  async patchById(id: string, resource: PatchTripDto) {
+  async updateById(id: string, resource: PatchTripDto) {
     return await tripsDaos.updateTripById(id, resource);
   }
-  async readById(id: string) {
+  async getById(id: string) {
     return await tripsDaos.getTripById(id);
+  }
+  async deleteAll() {
+    return await tripsDaos.deleteAllTrips();
+  }
+  async updateTripStatus(tripId: string) {
+    return await tripsDaos.updateTripStatus(tripId);
   }
 }
 
