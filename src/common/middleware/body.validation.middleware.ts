@@ -8,9 +8,13 @@ import AppError from '../types/appError';
 const log: debug.IDebugger = debug('app:bodyValidationMiddleware');
 
 class bodyValidationMiddleware {
-  verifyBodyFieldsError =
-    (fieldNames: string[]) =>
-    (
+  /**
+   * Middleware function to verify the presence of required fields in the request body.
+   * @param fieldNames - An array of field names that should be present in the request body.
+   * @returns A middleware function that checks for the presence of required fields and throws an error if any field is missing.
+   */
+  verifyBodyFieldsError = (fieldNames: string[]) => {
+    return (
       req: express.Request,
       res: express.Response,
       next: express.NextFunction
@@ -18,22 +22,16 @@ class bodyValidationMiddleware {
       const errors = validationResult(req).array();
       const requestBodyKeys = Object.keys(req.body || {});
 
-      const incorrectfieldNames = requestBodyKeys.filter((field) => {
-        if (!fieldNames.includes(field)) return field;
-      });
+      const incorrectFieldNames = this.getIncorrectFieldNames(
+        requestBodyKeys,
+        fieldNames
+      );
+      const incorrectFieldErrors = this.generateFieldErrors(
+        incorrectFieldNames,
+        req.body
+      );
 
-      const incorrectfieldNamesErrors = incorrectfieldNames.map((field) => {
-        const error: ValidationError = {
-          value: req.body[field],
-          msg: `${field} is not allowed`,
-          param: field,
-          location: 'body',
-        };
-
-        return error;
-      });
-
-      errors.push(...incorrectfieldNamesErrors);
+      errors.push(...incorrectFieldErrors);
 
       if (errors.length) {
         const error = new AppError(
@@ -46,8 +44,44 @@ class bodyValidationMiddleware {
         throw error;
       }
 
-      next(); // TODO: to be improved -> should do the body validation here as well as fieldnames validation?
+      next();
     };
+  };
+
+  /**
+   * Returns an array of incorrect field names in the request body.
+   * @param requestBodyKeys - The keys of the request body.
+   * @param fieldNames - The valid field names.
+   * @returns An array of incorrect field names.
+   */
+  getIncorrectFieldNames = (
+    requestBodyKeys: string[],
+    fieldNames: string[]
+  ): string[] => {
+    return requestBodyKeys.filter((field) => !fieldNames.includes(field));
+  };
+
+  /**
+   * Generates an array of ValidationError objects based on the incorrect field names and the request body.
+   * @param incorrectFieldNames - The array of incorrect field names.
+   * @param requestBody - The request body object.
+   * @returns An array of ValidationError objects.
+   */
+  generateFieldErrors = (
+    incorrectFieldNames: string[],
+    requestBody: any
+  ): ValidationError[] => {
+    return incorrectFieldNames.map((field) => {
+      const error: ValidationError = {
+        value: requestBody[field],
+        msg: `${field} is not allowed`,
+        param: field,
+        location: 'body',
+      };
+
+      return error;
+    });
+  };
 }
 
 export default new bodyValidationMiddleware();

@@ -29,10 +29,10 @@ export class AuthRoutes extends CommonRoutesConfig {
     ]);
 
     this.app.post('/v1/refresh-token', [
-      jwtMiddleware.rateLimitRefreshTokenRequests,
+      // jwtMiddleware.rateLimitRefreshTokenRequests,
       jwtMiddleware.checkValidToken,
       jwtMiddleware.checkValidRefreshToken,
-      jwtMiddleware.perpareBody,
+      jwtMiddleware.prepareBody,
       authController.logIn,
     ]);
 

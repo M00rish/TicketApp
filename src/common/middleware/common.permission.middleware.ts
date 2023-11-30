@@ -15,13 +15,15 @@ class permissionMiddleware {
       next: express.NextFunction
     ) => {
       try {
-        const userPermissionFlag = parseInt(res.locals.jwt.permissionFlags);
+        const userPermissionFlag = parseInt(
+          res.locals.jwt.payload.permissionFlags
+        );
         if (requiredPermissionFlags & userPermissionFlag) {
           return next();
         } else {
           const error = new AppError(
             true,
-            'permissionFlagsError',
+            'PermissionFlagsError',
             HttpStatusCode.Unauthorized,
             "you're not authorized to perform this operation"
           );
@@ -38,11 +40,11 @@ class permissionMiddleware {
     res: express.Response,
     next: express.NextFunction
   ) {
-    const userPermissionFlag = parseInt(res.locals.jwt.permissionFlags);
+    const userPermissionFlag = parseInt(res.locals.jwt.payload.permissionFlags);
     if (
       req.params &&
       req.params.userId &&
-      req.params.userId === res.locals.jwt.userId
+      req.params.userId === res.locals.jwt.payload.userId
     ) {
       return next();
     } else {
@@ -51,7 +53,7 @@ class permissionMiddleware {
       } else {
         const error = new AppError(
           true,
-          'permissionFlagsError',
+          'PermissionFlagsError',
           HttpStatusCode.Unauthorized,
           "you're not authorized to perform this operation"
         );
@@ -65,9 +67,9 @@ class permissionMiddleware {
     res: express.Response,
     next: express.NextFunction
   ) {
-    const userPermissionFlag = parseInt(res.locals.jwt.permissionFlags);
+    const userPermissionFlag = parseInt(res.locals.jwt.payload.permissionFlags);
     const reviewId = req.params.reviewId;
-    const userId = res.locals.jwt.userId;
+    const userId = res.locals.jwt.payload.userId;
 
     if (userPermissionFlag & permissionsFlags.ADMIN) {
       return next();
@@ -79,7 +81,7 @@ class permissionMiddleware {
     } else {
       const error = new AppError(
         true,
-        'permissionFlagsError',
+        'PermissionFlagsError',
         HttpStatusCode.Unauthorized,
         "you're not authorized to perform this operation"
       );

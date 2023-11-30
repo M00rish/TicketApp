@@ -60,7 +60,23 @@ class ErrorHandler {
     };
   }
 
-  private handleErrors(error: AppError) {
+  private handleEmailValidationError(emailValidationError: AppError) {
+    log('handleEmailValidationError: %O', emailValidationError);
+    return {
+      name: 'EmailValidationError',
+      message: emailValidationError.message,
+    };
+  }
+
+  private handleLoginError(loginError: AppError) {
+    log('handleLoginError: %O', loginError);
+    return {
+      name: 'LoginError',
+      message: loginError.message,
+    };
+  }
+
+  private handleErrors(error: Error) {
     log('handleErrors: %O', error);
     return {
       name: error.name,
@@ -85,7 +101,7 @@ class ErrorHandler {
           .status(HttpStatusCode.BadRequest)
           .json({ error: mongoValidationError });
       }
-      case 'permissionFlagsError': {
+      case 'PermissionFlagsError': {
         const permissionError = this.handlePermissionErrors(err);
         return res.status(err.statusCode).json({ error: permissionError });
       }
@@ -99,9 +115,17 @@ class ErrorHandler {
         const rateLimitError = this.handleRateLimitErrors(err);
         return res.status(err.statusCode).json({ error: rateLimitError });
       }
+      case 'EmailValidationError': {
+        const emailValidationError = this.handleEmailValidationError(err);
+        return res.status(err.statusCode).json({ error: emailValidationError });
+      }
+      case 'LoginError': {
+        const loginError = this.handleLoginError(err);
+        return res.status(err.statusCode).json({ error: loginError });
+      }
       default: {
         const error = this.handleErrors(err);
-        return res.status(err.statusCode || 500).json({ error: error });
+        return res.status(err.statusCode || 500).json({ error: error.message });
       }
     }
   };

@@ -11,11 +11,11 @@ class MongooseService {
     this.connectWithRetry();
   }
 
-  getMongoose() {
+  public getMongoose() {
     return mongoose;
   }
 
-  connectWithRetry = async () => {
+  public connectWithRetry = async () => {
     log('Attempting MongoDB connection (will retry if needed)');
 
     typeof global.it === 'function'
@@ -37,6 +37,24 @@ class MongooseService {
         setTimeout(this.connectWithRetry, retrySecond * 1000);
       });
   };
+
+  public async insertTestUsers(users: any[]) {
+    try {
+      const User = mongoose.model('User');
+      await User.insertMany(users);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async deleteTestData(ModelName: string) {
+    try {
+      const Model = mongoose.model(ModelName);
+      await Model.deleteMany({});
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export default new MongooseService();

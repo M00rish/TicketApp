@@ -1,85 +1,81 @@
 import express from 'express';
 import debug from 'debug';
 
-import usersService from '../services/users.service';
+import usersService, { UsersService } from '../services/users.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 
-const log: debug.IDebugger = debug('app:users-middleware');
+const log: debug.IDebugger = debug('app:Users-Middleware');
 
 class UsersMiddleware {
-  async validateSameEmailDoesntExist(
+  constructor(usersService: UsersService) {
+    log('Created new instance of UsersMiddleware');
+  }
+
+  /**
+   * Validates that the same email doesn't already exist in the database.
+   * If the email doesn't exist, the middleware calls the next function.
+   * If the email exists, it throws an error with the message 'user email already exist'.
+   *
+   * @param req - The express Request object.
+   * @param res - The express Response object.
+   * @param next - The express NextFunction object.
+   */
+  public async validateSameEmailDoesntExist(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
-    const user = await usersService.getUserByEmail(req.body.email);
+    try {
+      const user = await usersService.getUserByEmail(req.body.email);
 
-    if (!user) {
-      next();
-    } else {
-      const error = new AppError(
-        true,
-        'validateSameEmailDoesntExistError',
-        HttpStatusCode.BadRequest,
-        'user email already exist'
-      );
+      if (user.email)
+        throw new AppError(
+          true,
+          'EmailValidationError',
+          HttpStatusCode.BadRequest,
+          'user email already exist'
+        );
+    } catch (error) {
+      if (
+        error instanceof AppError &&
+        error.name === 'RessourceNotFoundError'
+      ) {
+        return next();
+      }
 
-      next(error);
+      return next(error);
     }
   }
 
-  async validateSameEmailBelongToSameUser(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) {
-    if (res.locals.user && res.locals.user._id === req.params.userId) {
-      next();
-    } else {
-      const error = new AppError(
-        true,
-        'validateSameEmailBelongToSameUserError',
-        HttpStatusCode.BadRequest,
-        'invalid email'
-      );
-      next(error);
-    }
-  }
-
-  validatePatchEmail = async (
+  /**
+   * Validates the patch email request.
+   * If the request body contains an email, it calls the validateSameEmailBelongToSameUser function.
+   * Otherwise, it calls the next middleware function.
+   *
+   * @param req - The express Request object.
+   * @param res - The express Response object.
+   * @param next - The express NextFunction object.
+   */
+  public validatePatchEmail = (
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) => {
     if (req.body.email) {
-      this.validateSameEmailBelongToSameUser(req, res, next);
+      this.validateSameEmailDoesntExist(req, res, next);
     } else {
       next();
     }
   };
 
-  async validateUserExists(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) {
-    const user = await usersService.getById(req.body.id);
-    if (user) {
-      res.locals.user = user;
-      next();
-    } else {
-      const error = new AppError(
-        true,
-        'RessourceNotFoundError',
-        HttpStatusCode.NotFound,
-        'user not found'
-      );
-      next(error);
-    }
-  }
-
-  async extractUserId(
+  /**
+   * Middleware function to extract the user ID from the request parameters and assign it to the request body.
+   * @param req - The Express request object.
+   * @param res - The Express response object.
+   * @param next - The next middleware function.
+   */
+  public extractUserId(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
@@ -88,7 +84,17 @@ class UsersMiddleware {
     next();
   }
 
-  async userCannotChangePermission(
+  /**
+   * Middleware function to check if the user can change permissions.
+   * If the user tries to change the permissionFlags and it's different from the current user's permissionFlags,
+   * it throws an error indicating that the user cannot change permissions.
+   * Otherwise, it calls the next middleware function.
+   *
+   * @param req - The Express request object.
+   * @param res - The Express response object.
+   * @param next - The next middleware function.
+   */
+  public userCannotChangePermission(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
@@ -99,7 +105,7 @@ class UsersMiddleware {
     ) {
       const error = new AppError(
         true,
-        'permissionFlagsError',
+        'PermissionFlagsError',
         HttpStatusCode.Forbidden,
         'you cannot change permissions'
       );
@@ -110,4 +116,4 @@ class UsersMiddleware {
   }
 }
 
-export default new UsersMiddleware();
+export default new UsersMiddleware(usersService);

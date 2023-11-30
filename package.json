@@ -3,7 +3,7 @@
     "start": "tsc && node --unhandled-rejections=strict ./dist/app.js",
     "add-assetsDir": "mkdir -p ./dist/public/users/images && mkdir -p ./dist/public/buses/images",
     "debug": "export DEBUG=* && npm run add-assetsDir && npm run start",
-    "test": "mocha --bail --require ts-node/register --require source-map-support/register  ./test/main.test.ts",
+    "test": "mocha --bail --require ts-node/register --require source-map-support/register --recursive ./test/users/**/* --exit",
     "test:debug": "export DEBUG=* && npm run test",
     "dev": "nodemon"
   },
@@ -26,6 +26,7 @@
     "mongoose": "^6.10.0",
     "multer": "^1.4.5-lts.1",
     "shortid": "^2.2.16",
+    "sinon": "^17.0.1",
     "winston": "^3.8.2"
   },
   "devDependencies": {
@@ -36,9 +37,10 @@
     "@types/debug": "^4.1.7",
     "@types/express": "^4.17.17",
     "@types/jsonwebtoken": "^9.0.1",
-    "@types/mocha": "^10.0.1",
+    "@types/mocha": "^10.0.4",
     "@types/node": "^18.15.3",
     "@types/shortid": "^0.0.29",
+    "@types/sinon": "^17.0.0",
     "@types/supertest": "^2.0.12",
     "chai": "^4.3.7",
     "copyfiles": "^2.4.1",
@@ -49,6 +51,7 @@
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
+    "sinon-chai": "^3.7.0",
     "source-map-support": "^0.5.21",
     "stream-browserify": "^3.0.0",
     "supertest": "^6.3.3",

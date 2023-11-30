@@ -31,7 +31,6 @@ export class UsersRoutes extends CommonRoutesConfig {
           .isLength({ min: 5 })
           .withMessage('Must include password (5+ characters)'),
         bodyValidationMiddleware.verifyBodyFieldsError([
-          'id',
           'email',
           'password',
           'firstName',
@@ -40,19 +39,28 @@ export class UsersRoutes extends CommonRoutesConfig {
         ]),
         usersMiddleware.validateSameEmailDoesntExist,
         usersController.createUser
+      )
+      .delete(
+        jwtMiddleware.checkValidToken,
+        commonPermissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        ),
+        usersController.deleteAllUsers
       );
 
     this.app.param(`userId`, usersMiddleware.extractUserId);
 
     this.app
       .route('/v1/users/:userId')
-      .all(
-        usersMiddleware.validateUserExists,
-        jwtMiddleware.checkValidToken,
-        commonPermissionMiddleware.onlySameUserOrAdminCanAccess
+      .all(jwtMiddleware.checkValidToken)
+      .get(
+        commonPermissionMiddleware.onlySameUserOrAdminCanAccess,
+        usersController.getUserById
       )
-      .get(usersController.getUserById)
-      .delete(usersController.deleteUser);
+      .delete(
+        commonPermissionMiddleware.onlySameUserOrAdminCanAccess,
+        usersController.deleteUser
+      );
 
     this.app.patch('/v1/users/:userId', [
       body('email').isEmail().optional(),
@@ -69,8 +77,8 @@ export class UsersRoutes extends CommonRoutesConfig {
         'firstName',
         'lastName',
         'image',
-        'permissionFlags',
       ]),
+      commonPermissionMiddleware.onlySameUserOrAdminCanAccess,
       usersMiddleware.validatePatchEmail,
       usersMiddleware.userCannotChangePermission,
       imageUpdateMiddleware.updateImage('user'), //TODO: wrong field names are not handled when sent through the form
@@ -80,9 +88,9 @@ export class UsersRoutes extends CommonRoutesConfig {
     this.app.patch('/v1/users/:userId/permissionFlags/:permissionFlags', [
       jwtMiddleware.checkValidToken,
       commonPermissionMiddleware.permissionsFlagsRequired(
-        permissionsFlags.USER
+        permissionsFlags.ADMIN
       ),
-      usersController.pathchPermissionFlags,
+      usersController.patchPermissionFlags,
     ]);
 
     return this.app;

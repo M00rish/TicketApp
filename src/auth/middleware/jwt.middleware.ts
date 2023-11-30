@@ -10,45 +10,66 @@ import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 const log: debug.IDebugger = debug('app:Jwt-Middlware');
 
 class JwtMiddleware {
-  checkValidToken(
+  /**
+   * Middleware function to check the validity of a JWT token in the request header.
+   * If the token is valid, it sets the decoded token in the response locals and calls the next middleware.
+   * If the token is invalid or missing, it throws an error.
+   *
+   * @param req - The Express request object.
+   * @param res - The Express response object.
+   * @param next - The Express next function.
+   */
+  public checkValidToken(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
-    if (req.headers['authorization']) {
-      try {
-        const authorization = req.headers['authorization'].split(' ');
-        if (authorization[0] !== 'Bearer') {
-          const error = new AppError(
-            true,
-            'NoTokenError',
-            HttpStatusCode.Unauthorized,
-            'you are not logged in,'
-          );
-          next(error);
-        } else {
-          res.locals.jwt = jwt.verify(
-            authorization[1],
-            process.env.ACCESS_SECRET
-          ) as Jwt;
+    const authorizationHeader = req.headers['authorization'];
 
-          next();
-        }
-      } catch (err) {
-        next(err);
-      }
-    } else {
-      const error = new AppError(
-        true,
-        'NoTokenError',
-        HttpStatusCode.Unauthorized,
-        'you are not logged in'
+    if (!authorizationHeader) {
+      return next(
+        new AppError(
+          true,
+          'LoginError',
+          HttpStatusCode.Unauthorized,
+          'You are not logged in'
+        )
       );
-      next(error);
     }
+
+    const [bearer, token] = authorizationHeader.split(' ');
+
+    if (bearer !== 'Bearer') {
+      return next(
+        new AppError(
+          true,
+          'LoginError',
+          HttpStatusCode.Unauthorized,
+          'You are not logged in'
+        )
+      );
+    }
+
+    jwt.verify(token, process.env.ACCESS_SECRET, (err, decoded) => {
+      if (err) {
+        return next(err);
+      }
+      res.locals.jwt = decoded as Jwt;
+      return next();
+    });
   }
 
-  async checkValidRefreshToken(
+  /**
+   * Middleware function to check the validity of a refresh token.
+   * It extracts the refresh token from the request headers, verifies it, and calls the next middleware if valid.
+   * If the refresh token is missing or invalid, it throws an error.
+   *
+   * @param req - The Express request object.
+   * @param res - The Express response object.
+   * @param next - The next middleware function.
+   * @returns Promise<void>
+   */
+  public async checkValidRefreshToken(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
@@ -56,34 +77,51 @@ class JwtMiddleware {
     try {
       const refreshToken = req.headers['cookie']?.split(';')[0].split('=')[1];
 
-      if (
-        refreshToken &&
-        jwt.verify(refreshToken, process.env.REFRESH_SECRET)
-      ) {
-        return next();
-      } else {
-        const error = new AppError(
+      if (!refreshToken) {
+        throw new AppError(
           true,
-          'InvalidRefreshTokenError',
+          'LoginError',
           HttpStatusCode.Unauthorized,
-          'Invalid refresh token'
+          'No refresh token provided'
         );
-        next(error);
       }
+
+      jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, decoded) => {
+        if (err) {
+          return next(
+            new AppError(
+              true,
+              'LoginError',
+              HttpStatusCode.Unauthorized,
+              'Invalid refresh token'
+            )
+          );
+        }
+        return next();
+      });
     } catch (err) {
       return next(err);
     }
   }
 
-  perpareBody(
+  /**
+   * Middleware function to prepare the request body by extracting necessary information from the JWT payload.
+   * If the request body exists, it will be modified to include the userId, refreshToken, and permissionFlags from the JWT payload.
+   * If the request body does not exist, an error will be passed to the next middleware.
+   * @param req - The Express request object.
+   * @param res - The Express response object.
+   * @param next - The next middleware function.
+   */
+  public prepareBody(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
     if (req.body) {
       req.body = {
-        userId: res.locals.jwt.userId,
-        permissionFlags: res.locals.jwt.permissionFlags,
+        userId: res.locals.jwt.payload.userId,
+        refreshToken: res.locals.jwt.payload.refreshToken,
+        permissionFlags: res.locals.jwt.payload.permissionFlags,
       };
       next();
     } else {
@@ -97,7 +135,7 @@ class JwtMiddleware {
     }
   }
 
-  rateLimitRefreshTokenRequests = rateLimit({
+  public rateLimitRefreshTokenRequests = rateLimit({
     windowMs: 15 * 24 * 60 * 60 * 1000,
     max: 1,
     message: 'Too many requests, please try again after 15 days',
@@ -105,3 +143,4 @@ class JwtMiddleware {
 }
 
 export default new JwtMiddleware();
+export { JwtMiddleware };

@@ -1,6 +1,6 @@
 import app from '../src/app';
 import request from 'supertest';
-import chai, { expect } from 'chai';
+import { expect } from 'chai';
 
 describe('App', () => {
   it('should return a starting message', async () => {
