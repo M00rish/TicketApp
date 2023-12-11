@@ -6,16 +6,21 @@ import { AuthService } from '../../../src/auth/services/auth.service';
 import { AuthController } from '../../../src/auth/controllers/auth.controller';
 import { UsersService } from '../../../src/users/services/users.service';
 import { UsersDao } from '../../../src/users/daos/users.dao';
+import { MongooseService } from '../../../src/common/service/mongoose.service';
+import { CommonService } from '../../../src/common/service/common.service';
 
 describe('AuthController', () => {
   describe('logIn', () => {
     let mockRequest: Partial<express.Request>;
     let mockResponse: Partial<express.Response>;
     let mockNext: Partial<express.NextFunction>;
-    let authController: AuthController;
-    let authService: AuthService;
-    let usersService: UsersService;
-    let usersDao: UsersDao;
+
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let usersDao = new UsersDao(commonService);
+    let usersService = new UsersService(usersDao);
+    let authService = new AuthService(usersService);
+    let authController = new AuthController(authService);
 
     beforeEach(() => {
       mockRequest = {};
@@ -24,11 +29,6 @@ describe('AuthController', () => {
         send: sinon.stub().returnsThis(),
       };
       mockNext = sinon.stub();
-
-      usersDao = new UsersDao();
-      usersService = new UsersService(usersDao);
-      authService = new AuthService(usersService);
-      authController = new AuthController(authService);
 
       sinon
         .stub(authService, 'createJWT')
@@ -58,10 +58,13 @@ describe('AuthController', () => {
     let mockRequest: Partial<express.Request>;
     let mockResponse: Partial<express.Response>;
     let mockNext: Partial<express.NextFunction>;
-    let authController: AuthController;
-    let authService: AuthService;
-    let usersService: UsersService;
-    let usersDao: UsersDao;
+
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let usersDao = new UsersDao(commonService);
+    let usersService = new UsersService(usersDao);
+    let authService = new AuthService(usersService);
+    let authController = new AuthController(authService);
 
     beforeEach(() => {
       mockRequest = {};
@@ -70,11 +73,6 @@ describe('AuthController', () => {
         send: sinon.stub().returnsThis(),
       };
       mockNext = sinon.stub();
-
-      usersDao = new UsersDao();
-      usersService = new UsersService(usersDao);
-      authService = new AuthService(usersService);
-      authController = new AuthController(authService);
 
       sinon.stub(authService, 'clearJWT').resolves();
     });

@@ -1,5 +1,5 @@
 import express from 'express';
-import { validationResult, ValidationError } from 'express-validator';
+import { validationResult, ValidationError, body } from 'express-validator';
 import debug from 'debug';
 
 import HttpStatusCode from '../enums/HttpStatusCode.enum';
@@ -7,13 +7,13 @@ import AppError from '../types/appError';
 
 const log: debug.IDebugger = debug('app:bodyValidationMiddleware');
 
-class bodyValidationMiddleware {
+class BodyValidationMiddleware {
   /**
    * Middleware function to verify the presence of required fields in the request body.
    * @param fieldNames - An array of field names that should be present in the request body.
    * @returns A middleware function that checks for the presence of required fields and throws an error if any field is missing.
    */
-  verifyBodyFieldsError = (fieldNames: string[]) => {
+  public verifyBodyFieldsError = (fieldNames: string[]) => {
     return (
       req: express.Request,
       res: express.Response,
@@ -21,7 +21,6 @@ class bodyValidationMiddleware {
     ) => {
       const errors = validationResult(req).array();
       const requestBodyKeys = Object.keys(req.body || {});
-
       const incorrectFieldNames = this.getIncorrectFieldNames(
         requestBodyKeys,
         fieldNames
@@ -54,7 +53,7 @@ class bodyValidationMiddleware {
    * @param fieldNames - The valid field names.
    * @returns An array of incorrect field names.
    */
-  getIncorrectFieldNames = (
+  public getIncorrectFieldNames = (
     requestBodyKeys: string[],
     fieldNames: string[]
   ): string[] => {
@@ -67,7 +66,7 @@ class bodyValidationMiddleware {
    * @param requestBody - The request body object.
    * @returns An array of ValidationError objects.
    */
-  generateFieldErrors = (
+  public generateFieldErrors = (
     incorrectFieldNames: string[],
     requestBody: any
   ): ValidationError[] => {
@@ -84,4 +83,5 @@ class bodyValidationMiddleware {
   };
 }
 
-export default new bodyValidationMiddleware();
+export default new BodyValidationMiddleware();
+export { BodyValidationMiddleware };

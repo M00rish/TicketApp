@@ -10,19 +10,20 @@ import { AuthService } from '../../../src/auth/services/auth.service';
 import { UsersService } from '../../../src/users/services/users.service';
 import AppError from '../../../src/common/types/appError';
 import { UsersDao } from '../../../src/users/daos/users.dao';
+import { MongooseService } from '../../../src/common/service/mongoose.service';
+import { CommonService } from '../../../src/common/service/common.service';
 
 dotenv.config();
 
 describe('AuthService', () => {
   describe('Constructor', () => {
-    let usersService: UsersService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let usersDao = new UsersDao(commonService);
+    let usersService = new UsersService(usersDao);
     let authService: AuthService;
-    let usersDao: UsersDao;
 
-    beforeEach(() => {
-      usersDao = new UsersDao();
-      usersService = new UsersService(usersDao);
-    });
+    beforeEach(() => {});
 
     it('should create a new instance of AuthService', () => {
       authService = new AuthService(usersService);
@@ -39,9 +40,12 @@ describe('AuthService', () => {
     let req: Partial<Request>;
     let res: Partial<Response>;
     let next: NextFunction;
-    let authService: AuthService;
-    let usersService: UsersService;
-    let usersDao: UsersDao;
+
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let usersDao = new UsersDao(commonService);
+    let usersService = new UsersService(usersDao);
+    let authService = new AuthService(usersService);
 
     beforeEach(() => {
       req = {
@@ -54,9 +58,6 @@ describe('AuthService', () => {
         cookie: sinon.stub(),
       };
       next = sinon.spy();
-      usersDao = new UsersDao();
-      usersService = new UsersService(usersDao);
-      authService = new AuthService(usersService);
 
       sinon.stub(usersService, 'updateUserRefreshTokenById').resolves();
       sinon.stub(authService, 'createToken').returns('testToken');
@@ -108,14 +109,13 @@ describe('AuthService', () => {
 
   describe('setCookie', () => {
     let res: Partial<Response>;
-    let authService: AuthService;
-    let usersService: UsersService;
-    let usersDao: UsersDao;
 
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let usersDao = new UsersDao(commonService);
+    let usersService = new UsersService(usersDao);
+    let authService = new AuthService(usersService);
     beforeEach(() => {
-      usersDao = new UsersDao();
-      usersService = new UsersService(usersDao);
-      authService = new AuthService(usersService);
       res = {
         cookie: sinon.stub(),
       };
@@ -158,9 +158,12 @@ describe('AuthService', () => {
     let req: Partial<Request>;
     let res: Partial<Response & { locals: any }>;
     let next: SinonSpy;
-    let authService: AuthService;
-    let usersService: UsersService;
-    let usersDao: UsersDao;
+
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let usersDao = new UsersDao(commonService);
+    let usersService = new UsersService(usersDao);
+    let authService = new AuthService(usersService);
 
     beforeEach(() => {
       req = {};
@@ -175,9 +178,6 @@ describe('AuthService', () => {
         send: sinon.stub(),
       };
       next = sinon.spy();
-      usersDao = new UsersDao();
-      usersService = new UsersService(usersDao);
-      authService = new AuthService(usersService);
 
       sinon.stub(usersService, 'updateUserRefreshTokenById').resolves();
     });
@@ -215,17 +215,17 @@ describe('AuthService', () => {
   });
 
   describe('createToken', () => {
-    let authService: AuthService;
-    let usersService: UsersService;
-    let usersDao: UsersDao;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let usersDao = new UsersDao(commonService);
+    let usersService = new UsersService(usersDao);
+    let authService = new AuthService(usersService);
+
     let payload: string;
     let secret: string;
     let expiresIn: string;
 
     beforeEach(() => {
-      usersDao = new UsersDao();
-      usersService = new UsersService(usersDao);
-      authService = new AuthService(usersService);
       payload = 'testPayload';
       secret = 'testSecret';
       expiresIn = '1h';

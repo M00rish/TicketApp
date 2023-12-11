@@ -13,7 +13,7 @@ class UsersController {
    * @param usersService - The users service.
    */
   constructor(private usersService: UsersService) {
-    this.usersService = usersService;
+    this.usersService = usersService; // TODO : check if needed
     this.createUser = this.createUser.bind(this);
     this.getUserById = this.getUserById.bind(this);
     this.deleteUser = this.deleteUser.bind(this);

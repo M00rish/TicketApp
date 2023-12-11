@@ -8,12 +8,14 @@ import { CreateReviewDto } from '../dtos/create.review.dto';
 import { PatchReviewDto } from '../dtos/patch.review.dto';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
+import CommonService from '../../common/service/common.service';
 
 const log: debug.IDebugger = debug('app:reviews-dao');
 
 class ReviewsDao {
   constructor() {
     log('created new instance of ReviewsDao');
+    this.Review = CommonService.getOrCreateModel(this.reviewSchema, 'Review');
   }
 
   async addReview(reviewFields: CreateReviewDto) {
@@ -148,7 +150,7 @@ class ReviewsDao {
       await this.Review.deleteMany({ userId: userId }).exec();
 
       for (const tripId of tripIdsToUpdate) {
-        await this.updateTripRating(tripId);
+        await this.updateTripRating(tripId as string); //TODO: to come back to this
       }
     } catch (error) {
       throw error;
@@ -246,7 +248,8 @@ class ReviewsDao {
     next();
   });
 
-  Review = mongooseService.getMongoose().model('Review', this.reviewSchema);
+  Review = CommonService.getOrCreateModel(this.reviewSchema, 'Review');
 }
 
 export default new ReviewsDao();
+export { ReviewsDao };

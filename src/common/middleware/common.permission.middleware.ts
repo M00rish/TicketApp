@@ -3,11 +3,24 @@ import { permissionsFlags } from '../enums/common.permissionflag.enum';
 import debug from 'debug';
 import AppError from '../types/appError';
 import HttpStatusCode from '../enums/HttpStatusCode.enum';
-import reviewsService from '../../reviews/services/reviews.service';
+import reviewsService, {
+  ReviewsService,
+} from '../../reviews/services/reviews.service';
 
 const log: debug.IDebugger = debug('app:common-permission-middleware');
 
-class permissionMiddleware {
+class PermissionMiddleware {
+  constructor(private reviewsService: ReviewsService) {
+    log('Created instance of CommonPermissionMiddleware');
+  }
+
+  /**
+   * Middleware function that checks if the user has the required permission flags.
+   * If the user has the required permission flags, the next middleware function is called.
+   * Otherwise, an error is passed to the next middleware function.
+   * @param requiredPermissionFlags The required permission flags.
+   * @returns The middleware function.
+   */
   permissionsFlagsRequired(requiredPermissionFlags: permissionsFlags) {
     return (
       req: express.Request,
@@ -35,6 +48,12 @@ class permissionMiddleware {
     };
   }
 
+  /**
+   * Middleware function that allows only the same user or an admin to access the route.
+   * @param req - The express Request object.
+   * @param res - The express Response object.
+   * @param next - The express NextFunction object.
+   */
   onlySameUserOrAdminCanAccess(
     req: express.Request,
     res: express.Response,
@@ -49,7 +68,7 @@ class permissionMiddleware {
       return next();
     } else {
       if (userPermissionFlag & permissionsFlags.ADMIN) {
-        next();
+        return next();
       } else {
         const error = new AppError(
           true,
@@ -57,11 +76,18 @@ class permissionMiddleware {
           HttpStatusCode.Unauthorized,
           "you're not authorized to perform this operation"
         );
+
         next(error);
       }
     }
   }
 
+  /**
+   * Middleware that allows only the admin or the user who created the review to access the route.
+   * @param req - The express request object.
+   * @param res - The express response object.
+   * @param next - The next middleware function.
+   */
   async onlyAdminOrUserWhoCreatedReviewCanAccess(
     req: express.Request,
     res: express.Response,
@@ -75,7 +101,7 @@ class permissionMiddleware {
       return next();
     }
 
-    const review = await reviewsService.getById(reviewId);
+    const review = await this.reviewsService.getById(reviewId);
     if (review.userId === userId) {
       return next();
     } else {
@@ -90,4 +116,5 @@ class permissionMiddleware {
   }
 }
 
-export default new permissionMiddleware();
+export default new PermissionMiddleware(reviewsService);
+export { PermissionMiddleware };

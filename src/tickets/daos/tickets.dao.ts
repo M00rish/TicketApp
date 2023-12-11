@@ -250,3 +250,4 @@ class TicketsDao {
 }
 
 export default new TicketsDao();
+export { TicketsDao };

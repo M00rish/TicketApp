@@ -2,24 +2,42 @@ import debug from 'debug';
 import { millisecondsToMinutes } from 'date-fns';
 import shortid from 'shortid';
 
-import mongooseService from '../../common/service/mongoose.service';
+import mongooseService, {
+  MongooseService,
+} from '../../common/service/mongoose.service';
 import citiesDao from '../../cities/daos/cities.dao';
 import busesDao from '../../buses/daos/buses.dao';
 import { CreateTripDto } from '../dtos/create.trip.dto';
 import { PatchTripDto } from '../dtos/patch.trips.dto';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
-import ticketsDao from '../../tickets/daos/tickets.dao';
-import SchedulerService from '../../common/service/scheduler.service';
-import schedulerService from '../../common/service/scheduler.service';
+import ticketsService, {
+  TicketsService,
+} from '../../tickets/services/tickets.service';
+import schedulerService, {
+  SchedulerService,
+} from '../../common/service/scheduler.service';
+import CommonService from '../../common/service/common.service';
 
 const log: debug.IDebugger = debug('app:trips-dao');
 
 class TripsDao {
-  constructor() {
+  constructor(
+    private schedulerService: SchedulerService,
+    private ticketsService: TicketsService,
+    private mongooseService: MongooseService
+  ) {
     log('created new instance of TripsDao');
+    this.Trip = CommonService.getOrCreateModel(this.tripSchema, 'Trip');
   }
 
+  /**
+   * Retrieves a list of trips.
+   * @param limit - The maximum number of trips to retrieve.
+   * @param page - The page number of the trips to retrieve.
+   * @returns A promise that resolves to an array of trips.
+   * @throws If an error occurs while retrieving the trips.
+   */
   async listTrips(limit = 25, page = 0) {
     try {
       return await this.Trip.find()
@@ -31,6 +49,12 @@ class TripsDao {
     }
   }
 
+  /**
+   * Adds a new trip to the database.
+   * @param tripFields - The trip fields to be added.
+   * @returns The ID of the newly added trip.
+   * @throws Throws an error if there is an issue adding the trip.
+   */
   async addTrip(tripFields: CreateTripDto) {
     try {
       const tripId = shortid.generate();
@@ -44,7 +68,10 @@ class TripsDao {
         this.validateTripTimings(arrivalTime, departureTime);
 
       await trip.save();
-      await SchedulerService.scheduleStatusUpdate(tripId, trip.arrivalTime);
+      await this.schedulerService.scheduleStatusUpdate(
+        tripId,
+        trip.arrivalTime
+      );
 
       return tripId;
     } catch (error) {
@@ -52,6 +79,11 @@ class TripsDao {
     }
   }
 
+  /**
+   * Retrieves a trip by its ID.
+   * @param tripId - The ID of the trip to retrieve.
+   * @returns The trip object if found, otherwise throws an error.
+   */
   async getTripById(tripId: string) {
     try {
       const trip = await this.Trip.findOne({ _id: tripId }).exec();
@@ -68,6 +100,13 @@ class TripsDao {
     }
   }
 
+  /**
+   * Updates a trip by its ID.
+   * @param tripId - The ID of the trip to update.
+   * @param tripFields - The fields to update in the trip.
+   * @returns The ID of the updated trip.
+   * @throws AppError if the trip is not found, has already been completed, or if there is an error updating the trip.
+   */
   async updateTripById(tripId: string, tripFields: PatchTripDto) {
     try {
       const trip = await this.Trip.findById({ _id: tripId }).exec();
@@ -106,7 +145,7 @@ class TripsDao {
         );
 
       if (trip.departureTime !== updatedTrip.departureTime)
-        schedulerService.updateScheduledTime(
+        this.schedulerService.updateScheduledTime(
           updatedTrip._id,
           updatedTrip.arrivalTime
         );
@@ -117,6 +156,11 @@ class TripsDao {
     }
   }
 
+  /**
+   * Deletes a trip by its ID.
+   * @param tripId - The ID of the trip to delete.
+   * @throws {AppError} If the trip is not found.
+   */
   async deleteTripById(tripId: string) {
     try {
       const trip = await this.Trip.deleteOne({ _id: tripId }).exec();
@@ -127,30 +171,39 @@ class TripsDao {
           HttpStatusCode.NotFound,
           'Trip not found'
         );
-      await ticketsDao.deleteTicketsByTripId(tripId);
-      await SchedulerService.cancelScheduledTime(tripId);
+      await this.ticketsService.deleteById(tripId);
+      await this.schedulerService.cancelScheduledTime(tripId);
     } catch (error) {
       throw error;
     }
   }
 
+  /**
+   * Deletes all trips from the database.
+   * Also deletes all associated tickets.
+   * @throws {Error} If an error occurs while deleting the trips or tickets.
+   */
   async deleteAllTrips() {
     try {
       await this.Trip.deleteMany({}).exec();
-      await ticketsDao.deleteAllTickets();
+      await this.ticketsService.deleteAllTickets();
     } catch (error) {
       throw error;
     }
   }
 
+  //TODO : move to buses dao
   validateBusExists = async (BusId: string) => {
     const busExists = await busesDao.Bus.exists({ _id: BusId });
     return busExists;
   };
 
+  // TODO : test after bus testing
   async validateBusAvailability(BusId: string) {
     try {
-      const trip = mongooseService.getMongoose().model('Trip', this.tripSchema);
+      const trip = this.mongooseService
+        .getMongoose()
+        .model('Trip', this.tripSchema);
 
       const tripWithSameTime = await trip.exists({
         busId: BusId,
@@ -176,55 +229,72 @@ class TripsDao {
     }
   }
 
+  /**
+   * Validates the trip timings.
+   *
+   * @param arrivalTime - The arrival time of the trip.
+   * @param departureTime - The departure time of the trip.
+   * @throws {AppError} - If the trip timings are invalid.
+   */
   validateTripTimings(
     arrivalTime: Date | undefined,
     departureTime: Date | undefined
   ) {
-    if (arrivalTime && departureTime) {
-      const paresdArrivalTime = new Date(arrivalTime);
-      const parsedDepartureTime = new Date(departureTime);
-      const now = new Date();
-
-      if (
-        paresdArrivalTime.getTime() < now.getTime() ||
-        parsedDepartureTime.getTime() < now.getTime()
-      )
-        throw new AppError(
-          true,
-          'validateArrivalTimeError',
-          HttpStatusCode.BadRequest,
-          'Arrival time and departure time must be in the future'
-        );
-
-      if (paresdArrivalTime.getTime() < parsedDepartureTime.getTime())
-        throw new AppError(
-          true,
-          'validateArrivalTimeError',
-          HttpStatusCode.BadRequest,
-          'Arrival time must be greater than departure time'
-        );
-
-      const difference =
-        paresdArrivalTime.getTime() - parsedDepartureTime.getTime();
-      const hours = difference / 1000 / 60 / 60;
-
-      if (hours > 48)
-        throw new AppError(
-          true,
-          'validateArrivalTimeError',
-          HttpStatusCode.BadRequest,
-          'The difference between arrival time and departure time must be at max 48 hours'
-        );
-    } else {
+    if (!arrivalTime || !departureTime) {
       throw new AppError(
         true,
         'validateArrivalTimeError',
         HttpStatusCode.BadRequest,
-        'Please provide both arrival time and departure time'
+        'Both arrival time and departure time must be provided'
+      );
+    }
+
+    const parsedArrivalTime = new Date(arrivalTime);
+    const parsedDepartureTime = new Date(departureTime);
+    const now = new Date();
+
+    if (parsedArrivalTime.getTime() < now.getTime()) {
+      throw new AppError(
+        true,
+        'validateArrivalTimeError',
+        HttpStatusCode.BadRequest,
+        'Arrival time must be in the future'
+      );
+    }
+
+    if (parsedDepartureTime.getTime() < now.getTime()) {
+      throw new AppError(
+        true,
+        'validateDepartureTimeError',
+        HttpStatusCode.BadRequest,
+        'Departure time must be in the future'
+      );
+    }
+
+    if (parsedArrivalTime.getTime() < parsedDepartureTime.getTime()) {
+      throw new AppError(
+        true,
+        'validateArrivalTimeError',
+        HttpStatusCode.BadRequest,
+        'Arrival time must be greater than departure time'
+      );
+    }
+
+    const difference =
+      parsedArrivalTime.getTime() - parsedDepartureTime.getTime();
+    const hours = difference / 1000 / 60 / 60;
+
+    if (hours > 48) {
+      throw new AppError(
+        true,
+        'validateArrivalTimeError',
+        HttpStatusCode.BadRequest,
+        'The difference between arrival time and departure time must be at max 48 hours'
       );
     }
   }
 
+  // TODO : test after cities testing
   async validateDepartureCity(departureCityName: string) {
     try {
       const departureCity = await citiesDao.getcityByName(departureCityName);
@@ -236,7 +306,7 @@ class TripsDao {
       throw error;
     }
   }
-
+  // TODO : test after cities testing
   async validateArrivalCity(arrivalCityName: string) {
     try {
       const arrivalCity = await citiesDao.getcityByName(arrivalCityName);
@@ -258,6 +328,12 @@ class TripsDao {
     }
   }
 
+  /**
+   * Updates the booked seats for a trip.
+   * @param tripId - The ID of the trip.
+   * @param seatNumber - The seat number to be added to the booked seats.
+   * @throws {AppError} If the trip is not found.
+   */
   async updateBookedSeats(tripId: string, seatNumber: Number) {
     try {
       const trip = await this.Trip.findById(tripId).exec();
@@ -269,7 +345,6 @@ class TripsDao {
           'Trip not found'
         );
 
-      // update bookedseats
       await this.Trip.findByIdAndUpdate(tripId, {
         $addToSet: { bookedSeats: seatNumber },
       }).exec();
@@ -278,6 +353,12 @@ class TripsDao {
     }
   }
 
+  /**
+   * Removes a booked seat from a trip.
+   * @param tripId - The ID of the trip.
+   * @param seatNumber - The seat number to be removed.
+   * @throws {AppError} If the trip is not found.
+   */
   async removeBookedSeat(tripId: string, seatNumber: Number) {
     try {
       const trip = await this.Trip.findById(tripId).exec();
@@ -298,6 +379,10 @@ class TripsDao {
     }
   }
 
+  /**
+   * Resets the booked seats for all trips.
+   * @throws {Error} If an error occurs while resetting the booked seats.
+   */
   async resetBookedSeatsForAllTrips() {
     try {
       await this.Trip.updateMany({}, { bookedSeats: [] }).exec();
@@ -305,6 +390,11 @@ class TripsDao {
       throw error;
     }
   }
+
+  /**
+   * Updates the status of a trip.
+   * @param tripId - The ID of the trip to update.
+   */
   async updateTripStatus(tripId: string) {
     const trip = await this.Trip.findById({ _id: tripId }).exec();
     if (!trip) return;
@@ -314,7 +404,7 @@ class TripsDao {
     }
   }
 
-  schema = mongooseService.getMongoose().Schema;
+  schema = this.mongooseService.getMongoose().Schema;
 
   tripSchema = new this.schema(
     {
@@ -390,7 +480,8 @@ class TripsDao {
     next();
   });
 
-  Trip = mongooseService.getMongoose().model('Trip', this.tripSchema);
+  Trip = CommonService.getOrCreateModel(this.tripSchema, 'Trip');
 }
 
-export default new TripsDao();
+export default new TripsDao(schedulerService, ticketsService, mongooseService);
+export { TripsDao };

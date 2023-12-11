@@ -7,17 +7,18 @@ import { UsersService } from '../../../src/users/services/users.service';
 import { AuthMiddlware } from '../../../src/auth/middleware/auth.middleware';
 import { UsersDao } from '../../../src/users/daos/users.dao';
 import AppError from '../../../src/common/types/appError';
+import { MongooseService } from '../../../src/common/service/mongoose.service';
+import { CommonService } from '../../../src/common/service/common.service';
 
 describe('AuthMiddleware', () => {
   describe('constructor', () => {
-    let usersService: UsersService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let usersDao = new UsersDao(commonService);
+    let usersService = new UsersService(usersDao);
     let authMiddleware: AuthMiddlware;
-    let usersDao: UsersDao;
 
-    beforeEach(() => {
-      usersDao = new UsersDao();
-      usersService = new UsersService(usersDao);
-    });
+    beforeEach(() => {});
 
     it('should create a new instance of AuthMiddlware', () => {
       authMiddleware = new AuthMiddlware(usersService);
@@ -38,18 +39,17 @@ describe('AuthMiddleware', () => {
   });
 
   describe('verifyUserPassword', () => {
-    let usersService: UsersService;
-    let authMiddleware: AuthMiddlware;
-    let usersDao: UsersDao;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let usersDao = new UsersDao(commonService);
+    let usersService = new UsersService(usersDao);
+    let authMiddleware = new AuthMiddlware(usersService);
     let req: express.Request;
     let res: express.Response;
     let next: express.NextFunction;
     let user: any;
 
     beforeEach(() => {
-      usersDao = new UsersDao();
-      usersService = new UsersService(usersDao);
-      authMiddleware = new AuthMiddlware(usersService);
       req = {
         body: {
           email: 'test@test.com',
@@ -63,6 +63,10 @@ describe('AuthMiddleware', () => {
         password: bcrypt.hashSync('password', 10),
         permissionFlags: 'user',
       };
+    });
+
+    afterEach(() => {
+      sinon.restore();
     });
 
     it('should call next() if the password is correct', async () => {

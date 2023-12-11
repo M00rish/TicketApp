@@ -18,6 +18,10 @@ class SchedulerService {
     this.initAgenda();
   }
 
+  /**
+   * Initializes the agenda and defines the job functions for trip status and ticket status updates.
+   * @returns A promise that resolves when the agenda is successfully started.
+   */
   private async initAgenda(): Promise<void> {
     this.agenda.define(`tripStatusJob`, async (job) => {
       try {
@@ -42,6 +46,13 @@ class SchedulerService {
     await this.agenda.start();
   }
 
+  /**
+   * Schedules status update for a trip.
+   * @param tripId - The ID of the trip.
+   * @param arrivalTime - The arrival time for the trip.
+   * @returns A promise that resolves when the status update is scheduled.
+   * @throws If there is an error scheduling the status update.
+   */
   public async scheduleStatusUpdate(
     tripId: string,
     arrivalTime: Date
@@ -54,6 +65,13 @@ class SchedulerService {
     }
   }
 
+  /**
+   * Updates the scheduled time for a trip and reschedules related jobs.
+   * @param tripId - The ID of the trip.
+   * @param arrivalTime - The new arrival time for the trip.
+   * @returns A Promise that resolves when the update is complete.
+   * @throws If there is an error updating the scheduled time.
+   */
   public async updateScheduledTime(
     tripId: string,
     arrivalTime: Date
@@ -76,6 +94,12 @@ class SchedulerService {
     }
   }
 
+  /**
+   * Cancels the scheduled time for a trip.
+   * @param tripId - The ID of the trip.
+   * @returns A Promise that resolves when the scheduled time is successfully canceled.
+   * @throws If there is an error while canceling the scheduled time.
+   */
   public async cancelScheduledTime(tripId: string): Promise<void> {
     try {
       await this.agenda.cancel({
@@ -94,3 +118,4 @@ class SchedulerService {
 }
 
 export default new SchedulerService();
+export { SchedulerService };

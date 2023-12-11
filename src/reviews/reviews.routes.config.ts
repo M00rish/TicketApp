@@ -2,7 +2,7 @@ import express from 'express';
 import { body } from 'express-validator';
 
 import { CommonRoutesConfig } from '../common/common.routes.config';
-import commonPermissionMiddleware from '../common/middleware/common.permission.middleware';
+import PermissionMiddleware from '../common/middleware/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
 import jwtMiddleware from '../auth/middleware/jwt.middleware';
 import reviewsController from './controllers/reviews.controllers';
@@ -18,16 +18,12 @@ export class ReviewsRoutes extends CommonRoutesConfig {
       .route(`/v1/trips/:tripId/reviews`)
       .get([
         jwtMiddleware.checkValidToken,
-        commonPermissionMiddleware.permissionsFlagsRequired(
-          permissionsFlags.USER
-        ),
+        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
         reviewsController.getReviewsByTripId,
       ])
       .post([
         jwtMiddleware.checkValidToken,
-        commonPermissionMiddleware.permissionsFlagsRequired(
-          permissionsFlags.USER
-        ),
+        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
         body('ratings').isNumeric(),
         body('reviewText').isString(),
         bodyValidationMiddleware.verifyBodyFieldsError([
@@ -38,9 +34,7 @@ export class ReviewsRoutes extends CommonRoutesConfig {
       ])
       .delete([
         jwtMiddleware.checkValidToken,
-        commonPermissionMiddleware.permissionsFlagsRequired(
-          permissionsFlags.ADMIN
-        ),
+        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
         reviewsController.removeReviewsByTripId,
       ]);
 
@@ -48,12 +42,12 @@ export class ReviewsRoutes extends CommonRoutesConfig {
       .route(`/v1/users/:userId/reviews`)
       .get([
         jwtMiddleware.checkValidToken,
-        commonPermissionMiddleware.onlySameUserOrAdminCanAccess,
+        PermissionMiddleware.onlySameUserOrAdminCanAccess,
         reviewsController.getReviewsByUserId,
       ])
       .delete([
         jwtMiddleware.checkValidToken,
-        commonPermissionMiddleware.onlySameUserOrAdminCanAccess,
+        PermissionMiddleware.onlySameUserOrAdminCanAccess,
         reviewsController.removeReviewsByUserId,
       ]);
 
@@ -61,14 +55,12 @@ export class ReviewsRoutes extends CommonRoutesConfig {
       .route(`/v1/reviews/:reviewId`)
       .get([
         jwtMiddleware.checkValidToken,
-        commonPermissionMiddleware.permissionsFlagsRequired(
-          permissionsFlags.USER
-        ),
+        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
         reviewsController.getReviewById,
       ])
       .patch([
         jwtMiddleware.checkValidToken,
-        commonPermissionMiddleware.onlyAdminOrUserWhoCreatedReviewCanAccess,
+        PermissionMiddleware.onlyAdminOrUserWhoCreatedReviewCanAccess,
         body('ratings').isNumeric(),
         body('reviewText').isString(),
         bodyValidationMiddleware.verifyBodyFieldsError([
@@ -79,7 +71,7 @@ export class ReviewsRoutes extends CommonRoutesConfig {
       ])
       .delete([
         jwtMiddleware.checkValidToken,
-        commonPermissionMiddleware.onlyAdminOrUserWhoCreatedReviewCanAccess,
+        PermissionMiddleware.onlyAdminOrUserWhoCreatedReviewCanAccess,
         reviewsController.removeReviewById,
       ]);
 

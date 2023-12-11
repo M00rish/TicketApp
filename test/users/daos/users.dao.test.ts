@@ -6,13 +6,16 @@ import { exit } from 'process';
 
 import { UsersDao } from '../../../src/users/daos/users.dao';
 import AppError from '../../../src/common/types/appError';
-import commonService from '../../../src/common/service/common.service';
+import { CommonService } from '../../../src/common/service/common.service';
+import { MongooseService } from '../../../src/common/service/mongoose.service';
 import debug from 'debug';
 
 describe('UsersDao', () => {
-  let usersDao: UsersDao = new UsersDao();
-
   describe('Constructor', () => {
+    let mongooseService: MongooseService = new MongooseService();
+    let commonService: CommonService = new CommonService(mongooseService);
+    let usersDao: UsersDao;
+
     let getOrCreateModelStub: sinon.SinonStub;
 
     beforeEach(() => {
@@ -27,7 +30,7 @@ describe('UsersDao', () => {
       const userModel = { name: 'User' };
       getOrCreateModelStub.returns(userModel);
 
-      const usersDao = new UsersDao();
+      usersDao = new UsersDao(commonService);
 
       expect(
         getOrCreateModelStub.calledWithExactly(usersDao.userSchema, 'User')
@@ -37,6 +40,9 @@ describe('UsersDao', () => {
   });
 
   describe('createUser', () => {
+    let mongooseService: MongooseService = new MongooseService();
+    let commonService: CommonService = new CommonService(mongooseService);
+    let usersDao: UsersDao = new UsersDao(commonService);
     let saveUserStub: sinon.SinonStub;
     let generateIdStub: sinon.SinonStub;
 
@@ -90,6 +96,9 @@ describe('UsersDao', () => {
   });
 
   describe('updateUserById', () => {
+    let mongooseService: MongooseService = new MongooseService();
+    let commonService: CommonService = new CommonService(mongooseService);
+    let usersDao: UsersDao = new UsersDao(commonService);
     let findByIdStub: sinon.SinonStub;
     let findOneAndUpdateStub: sinon.SinonStub;
 
@@ -193,6 +202,9 @@ describe('UsersDao', () => {
   });
 
   describe('getUserByEmail', () => {
+    let mongooseService: MongooseService = new MongooseService();
+    let commonService: CommonService = new CommonService(mongooseService);
+    let usersDao: UsersDao = new UsersDao(commonService);
     let findOneStub: sinon.SinonStub;
 
     beforeEach(() => {
@@ -260,6 +272,9 @@ describe('UsersDao', () => {
   });
 
   describe('getUserById', () => {
+    let mongooseService: MongooseService = new MongooseService();
+    let commonService: CommonService = new CommonService(mongooseService);
+    let usersDao: UsersDao = new UsersDao(commonService);
     let findOneStub: sinon.SinonStub;
 
     beforeEach(() => {
@@ -332,6 +347,9 @@ describe('UsersDao', () => {
   });
 
   describe('listUsers', () => {
+    let mongooseService: MongooseService = new MongooseService();
+    let commonService: CommonService = new CommonService(mongooseService);
+    let usersDao: UsersDao = new UsersDao(commonService);
     let findStub: sinon.SinonStub;
 
     beforeEach(() => {
@@ -395,6 +413,9 @@ describe('UsersDao', () => {
   });
 
   describe('deleteUserById', () => {
+    let mongooseService: MongooseService = new MongooseService();
+    let commonService: CommonService = new CommonService(mongooseService);
+    let usersDao: UsersDao = new UsersDao(commonService);
     let findByIdStub: sinon.SinonStub;
     let deleteOneStub: sinon.SinonStub;
 
@@ -481,6 +502,9 @@ describe('UsersDao', () => {
   });
 
   describe('getUserByEmailWithPassword', () => {
+    let mongooseService: MongooseService = new MongooseService();
+    let commonService: CommonService = new CommonService(mongooseService);
+    let usersDao: UsersDao = new UsersDao(commonService);
     let findOneStub: sinon.SinonStub;
 
     beforeEach(() => {
@@ -553,6 +577,9 @@ describe('UsersDao', () => {
   });
 
   describe('updateUserRefreshTokenById', () => {
+    let mongooseService: MongooseService = new MongooseService();
+    let commonService: CommonService = new CommonService(mongooseService);
+    let usersDao: UsersDao = new UsersDao(commonService);
     let findByIdStub: sinon.SinonStub;
     let findOneAndUpdateStub: sinon.SinonStub;
 
@@ -646,6 +673,9 @@ describe('UsersDao', () => {
   });
 
   describe('deleteAllUsers', () => {
+    let mongooseService: MongooseService = new MongooseService();
+    let commonService: CommonService = new CommonService(mongooseService);
+    let usersDao: UsersDao = new UsersDao(commonService);
     let deleteManyStub: sinon.SinonStub;
 
     beforeEach(() => {

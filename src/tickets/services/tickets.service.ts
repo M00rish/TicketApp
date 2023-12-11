@@ -1,6 +1,6 @@
 import debug from 'debug';
 import { CRUD } from '../../common/interfaces/crud.interface';
-import ticketsDao from '../daos/tickets.dao';
+import ticketsDao, { TicketsDao } from '../daos/tickets.dao';
 
 const log: debug.IDebugger = debug('app:tickets-service');
 
@@ -38,3 +38,4 @@ class TicketsService implements CRUD {
 }
 
 export default new TicketsService(ticketsDao);
+export { TicketsService };

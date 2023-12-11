@@ -5,17 +5,21 @@ import bcrypt from 'bcryptjs';
 import { CreateUserDto } from '../dtos/create.user.dto';
 import { PutUserDto } from '../dtos/put.user.dto';
 import { PatchUserDto } from '../dtos/patch.user.dto';
-import mongooseService from '../../common/service/mongoose.service';
+import mongooseService, {
+  MongooseService,
+} from '../../common/service/mongoose.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
-import commonService from '../../common/service/common.service';
+import commonService, {
+  CommonService,
+} from '../../common/service/common.service';
 
 const log: debug.IDebugger = debug('app:in-memory-dao');
 
 class UsersDao {
-  constructor() {
+  constructor(private commonService: CommonService) {
     log('created new instance of UsersDao');
-    this.User = commonService.getOrCreateModel(this.userSchema, 'User');
+    this.User = this.commonService.getOrCreateModel(this.userSchema, 'User');
   }
 
   /**
@@ -296,8 +300,8 @@ class UsersDao {
     next();
   });
 
-  User = commonService.getOrCreateModel(this.userSchema, 'User');
+  User = this.commonService.getOrCreateModel(this.userSchema, 'User');
 }
 
-export default new UsersDao();
+export default new UsersDao(commonService);
 export { UsersDao };

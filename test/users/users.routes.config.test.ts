@@ -43,14 +43,9 @@ const body = {
   password: '123456',
   firstName: 'sami',
   lastName: 'malik',
-  image: 'default.jpg',
 };
 
 let accessToken = '';
-
-let User_Id = '';
-let TripGuide_Id = '';
-let Admin_Id = '';
 
 const newFirstName = 'markos';
 const newLastName = 'Faraco';
@@ -100,7 +95,7 @@ describe('users and auth', function () {
   });
 
   describe('User Role', function () {
-    it('should allow a POST to /v1/users/login and return error message when password or email is wrong', async function () {
+    it('should allow a POST to /v1/login and return error message when password or email is wrong', async function () {
       const response = await request.post('/v1/login').send({
         email: User.email,
         password: '1234567',
@@ -111,7 +106,7 @@ describe('users and auth', function () {
       expect(response.body.error.name).to.equal('LoginError');
     });
 
-    it('should allow a POST to /v1/users/login', async function () {
+    it('should allow a POST to /v1/login', async function () {
       const response = await request.post('/v1/login').send({
         email: User.email,
         password: '123456',

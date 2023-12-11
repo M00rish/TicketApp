@@ -1,3 +1,4 @@
+import 'mocha';
 import app from '../src/app';
 import request from 'supertest';
 import { expect } from 'chai';

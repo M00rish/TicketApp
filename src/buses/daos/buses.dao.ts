@@ -3,16 +3,25 @@ import shortid from 'shortid';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import AppError from '../../common/types/appError';
 import mongooseService from '../../common/service/mongoose.service';
+import commonService, {
+  CommonService,
+} from '../../common/service/common.service';
 import { CreateBusDto } from '../dtos/create.bus.dto';
 import { PatchBusDto } from '../dtos/patch.bus.dto';
 
 const log: debug.IDebugger = debug('app:buses-dao');
 
 class BusesDao {
-  constructor() {
+  constructor(private commonService: CommonService) {
     log('created new instance of BusesDao');
   }
 
+  /**
+   * Adds a new bus to the database.
+   * @param busFields - The fields of the bus to be added.
+   * @returns The ID of the newly added bus.
+   * @throws Throws an error if there is an issue adding the bus.
+   */
   async addBus(busFields: CreateBusDto) {
     try {
       const busId = shortid.generate();
@@ -28,6 +37,12 @@ class BusesDao {
     }
   }
 
+  /**
+   * Retrieves a bus by its ID.
+   * @param busId - The ID of the bus to retrieve.
+   * @returns A Promise that resolves to the retrieved bus.
+   * @throws {AppError} If the bus is not found.
+   */
   async getBusById(busId: string) {
     try {
       const bus = await this.Bus.findById(busId).exec();
@@ -44,22 +59,28 @@ class BusesDao {
     }
   }
 
+  /**
+   * Retrieves all buses from the database.
+   * @returns {Promise<Array<Bus>>} A promise that resolves to an array of Bus objects.
+   * @throws {Error} If there is an error while retrieving the buses.
+   */
   async getBuses() {
     try {
       const buses = await this.Bus.find().exec();
-      if (!buses)
-        throw new AppError(
-          true,
-          'getBuses_Error',
-          HttpStatusCode.NotFound,
-          'No buses found'
-        );
+
       return buses;
     } catch (error) {
       throw error;
     }
   }
 
+  /**
+   * Updates a bus by its ID.
+   * @param {string} busId - The ID of the bus to update.
+   * @param {PatchBusDto} busFields - The fields to update on the bus.
+   * @returns {Promise<string>} The ID of the updated bus.
+   * @throws {AppError} If the bus is not found.
+   */
   async updateBusById(busId: string, busFields: PatchBusDto) {
     try {
       const bus = await this.Bus.findById(busId).exec();
@@ -78,6 +99,12 @@ class BusesDao {
     }
   }
 
+  /**
+   * Removes a bus by its ID.
+   * @param {string} busId - The ID of the bus to be removed.
+   * @returns {Promise<string>} - The ID of the removed bus.
+   * @throws {AppError} - If the bus is not found.
+   */
   async removeBusById(busId: string) {
     try {
       const bus = await this.Bus.findById(busId).exec();
@@ -112,8 +139,12 @@ class BusesDao {
     },
     { id: false, timestamps: true }
   );
+  //   .pre(/^find/, function () {
+  //   // this.select('-createdAt -updatedAt -__v');
+  // });
 
-  Bus = mongooseService.getMongoose().model('Buses', this.busSchema);
+  Bus = this.commonService.getOrCreateModel(this.busSchema, 'Bus');
 }
 
-export default new BusesDao();
+export default new BusesDao(commonService);
+export { BusesDao };

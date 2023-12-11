@@ -2,11 +2,16 @@ import AppError from '../types/appError';
 
 import debug from 'debug';
 import express from 'express';
-import HttpStatusCode from '../enums/HttpStatusCode.enum';
+import { v4 as uuidv4 } from 'uuid';
 
 const log: debug.IDebugger = debug('app:errorHandler');
 
 class ErrorHandler {
+  /**
+   * Handles validation errors and returns a formatted error object.
+   * @param validationError - The validation error object.
+   * @returns The formatted error object containing the name and error message.
+   */
   private handleValidationErrors(validationError: AppError) {
     log('handleValidationErrors: %O', validationError);
     const errorMsgs = JSON.parse(validationError.message);
@@ -17,6 +22,11 @@ class ErrorHandler {
     };
   }
 
+  /**
+   * Handles MongoDB validation errors.
+   * @param MongovalidationError - The MongoDB validation error.
+   * @returns An object containing the name and message of the error.
+   */
   private handleMongoValidationErrors(MongovalidationError: AppError) {
     log('handleMongoValidationErrors: %O', MongovalidationError);
     //@ts-ignore
@@ -36,99 +46,57 @@ class ErrorHandler {
     };
   }
 
-  private handlePermissionErrors(permissionError: AppError) {
-    log('handlePermissionErrors: %O', permissionError);
-    return {
-      name: 'PermissionFlagsError',
-      message: permissionError.message,
-    };
-  }
-
-  private ressourceNotFoundError(notFoundError: AppError) {
-    log('ressourceNotFoundError: %O', notFoundError);
-    return {
-      name: 'RessourceNotFoundError',
-      message: notFoundError.message,
-    };
-  }
-
-  private handleRateLimitErrors(rateLimitError: AppError) {
-    log('handleRateLimitErrors: %O', rateLimitError);
-    return {
-      name: 'RateLimitError',
-      message: rateLimitError.message,
-    };
-  }
-
-  private handleEmailValidationError(emailValidationError: AppError) {
-    log('handleEmailValidationError: %O', emailValidationError);
-    return {
-      name: 'EmailValidationError',
-      message: emailValidationError.message,
-    };
-  }
-
-  private handleLoginError(loginError: AppError) {
-    log('handleLoginError: %O', loginError);
-    return {
-      name: 'LoginError',
-      message: loginError.message,
-    };
-  }
-
-  private handleErrors(error: Error) {
-    log('handleErrors: %O', error);
+  /**
+   * Handles a generic error and returns an object with the error name and message.
+   * @param error The error to be handled.
+   * @returns An object with the error name and message.
+   */
+  private genericErrorHandler(error: AppError) {
+    log(`handle${error.name}: %O`, error);
     return {
       name: error.name,
       message: error.message,
     };
   }
 
+  /**
+   * Object containing error handlers for different types of errors.
+   * The keys are the error types and the values are the corresponding error handler functions.
+   */
+  private errorHandlers: { [key: string]: (error: AppError) => any } = {
+    InputValidationError: this.handleValidationErrors,
+    ValidationError: this.handleMongoValidationErrors,
+  };
+
+  /**
+   * Handles the error and sends an appropriate response.
+   * @param err - The error object.
+   * @param req - The request object.
+   * @param res - The response object.
+   * @param next - The next function.
+   * @returns The response with the error details.
+   */
   public handle = (
     err: AppError,
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) => {
-    switch (err.name) {
-      case 'InputValidationError': {
-        const validationError = this.handleValidationErrors(err);
-        return res.status(err.statusCode).json({ error: validationError });
-      }
-      case 'ValidationError': {
-        const mongoValidationError = this.handleMongoValidationErrors(err);
-        return res
-          .status(HttpStatusCode.BadRequest)
-          .json({ error: mongoValidationError });
-      }
-      case 'PermissionFlagsError': {
-        const permissionError = this.handlePermissionErrors(err);
-        return res.status(err.statusCode).json({ error: permissionError });
-      }
-      case 'RessourceNotFoundError': {
-        const ressourceNotFoundError = this.ressourceNotFoundError(err);
-        return res
-          .status(err.statusCode)
-          .json({ error: ressourceNotFoundError });
-      }
-      case 'RateLimitError': {
-        const rateLimitError = this.handleRateLimitErrors(err);
-        return res.status(err.statusCode).json({ error: rateLimitError });
-      }
-      case 'EmailValidationError': {
-        const emailValidationError = this.handleEmailValidationError(err);
-        return res.status(err.statusCode).json({ error: emailValidationError });
-      }
-      case 'LoginError': {
-        const loginError = this.handleLoginError(err);
-        return res.status(err.statusCode).json({ error: loginError });
-      }
-      default: {
-        const error = this.handleErrors(err);
-        return res.status(err.statusCode || 500).json({ error: error.message });
-      }
-    }
+    log('handle: %O', err);
+
+    const handler = this.errorHandlers[err.name] || this.genericErrorHandler;
+    const error = handler.call(this, err);
+
+    return res.status(err.statusCode || 500).json({
+      error: {
+        id: uuidv4(),
+        status: err.statusCode || 500,
+        name: error.name,
+        message: error.message,
+      },
+    });
   };
 }
 
 export default new ErrorHandler();
+export { ErrorHandler };

@@ -15,7 +15,6 @@ class imageUpdateMiddleware {
       res: express.Response,
       next: express.NextFunction
     ) => {
-      log(req.body);
       let imagesFolderPath;
 
       if (ressource === 'user')
@@ -70,3 +69,4 @@ class imageUpdateMiddleware {
 }
 
 export default new imageUpdateMiddleware();
+export { imageUpdateMiddleware };

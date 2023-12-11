@@ -1,5 +1,5 @@
 import express from 'express';
-import http from 'http';
+import http from 'http'; // /TODO: to swap with https
 import winston from 'winston';
 import expressWinston from 'express-winston';
 import cors from 'cors';

@@ -2,7 +2,7 @@ import express from 'express';
 
 import { CommonRoutesConfig } from '../common/common.routes.config';
 import jwtMiddleware from '../auth/middleware/jwt.middleware';
-import commonPermissionMiddleware from '../common/middleware/common.permission.middleware';
+import PermissionMiddleware from '../common/middleware/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
 import tripsController from './controllers/trips.controller';
 import { body } from 'express-validator';
@@ -18,15 +18,11 @@ export class TripsRoutes extends CommonRoutesConfig {
       .route(`/v1/trips`)
       .all(jwtMiddleware.checkValidToken)
       .get([
-        commonPermissionMiddleware.permissionsFlagsRequired(
-          permissionsFlags.USER
-        ),
+        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
         tripsController.listTrips,
       ])
       .post([
-        commonPermissionMiddleware.permissionsFlagsRequired(
-          permissionsFlags.ADMIN
-        ),
+        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
         body('departureCity').isString(),
         body('arrivalCity').isString(),
         body('departureTime').isString(),
@@ -44,9 +40,7 @@ export class TripsRoutes extends CommonRoutesConfig {
         tripsController.createTrip,
       ])
       .delete([
-        commonPermissionMiddleware.permissionsFlagsRequired(
-          permissionsFlags.ADMIN
-        ),
+        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
         tripsController.deleteAllTrips,
       ]);
 
@@ -55,13 +49,11 @@ export class TripsRoutes extends CommonRoutesConfig {
       .all([jwtMiddleware.checkValidToken])
       .get(tripsController.getTripById)
       .delete([
-        commonPermissionMiddleware.permissionsFlagsRequired(
-          permissionsFlags.ADMIN
-        ),
+        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
         tripsController.deleteTripById,
       ])
       .patch([
-        commonPermissionMiddleware.permissionsFlagsRequired(
+        PermissionMiddleware.permissionsFlagsRequired(
           permissionsFlags.TRIP_GUIDE
         ),
         body('departureCity').isString().optional(),
