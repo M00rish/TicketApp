@@ -3,7 +3,7 @@
     "start": "tsc && node --unhandled-rejections=strict ./dist/app.js",
     "add-assetsDir": "mkdir -p ./dist/public/users/images && mkdir -p ./dist/public/buses/images",
     "debug": "export DEBUG=* && npm run add-assetsDir && npm run start",
-    "test": "mocha --bail --require ts-node/register --require source-map-support/register --recursive ./test/buses/* --exit",
+    "test": "mocha --bail --require ts-node/register --require source-map-support/register --recursive ./test/buses/**/*rm -f .git/index.lock --exit",
     "test:debug": "export DEBUG=* && npm run test",
     "dev": "nodemon"
   },
