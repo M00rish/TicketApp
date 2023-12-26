@@ -1,27 +1,41 @@
 import express from 'express';
 import { body } from 'express-validator';
+
+import { container } from '../ioc/inversify.config';
 import { CommonRoutesConfig } from '../common/common.routes.config';
-import jwtMiddleware from '../auth/middleware/jwt.middleware';
-import busesController from './controllers/buses.controller';
-import imageUpdateMiddleware from '../common/middleware/image.update.middleware';
-import PermissionMiddleware from '../common/middleware/common.permission.middleware';
+import { JwtMiddleware } from '../auth/middleware/jwt.middleware';
+import { imageUpdateMiddleware } from '../common/middlewares/image.update.middleware';
+import { PermissionMiddleware } from '../common/middlewares/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
-import bodyValidationMiddleware from '../common/middleware/body.validation.middleware';
+import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
+import { BusesController } from './controllers/buses.controller';
 
 export class BusesRoutes extends CommonRoutesConfig {
+  private jwtMiddleware;
+  private permissionMiddleware;
+  private bodyValidationMiddleware;
+  private imageUpdateMiddleware;
+  private busesController;
+
   constructor(app: express.Application) {
     super(app, 'busesRoutes');
+
+    this.jwtMiddleware = container.resolve(JwtMiddleware);
+    this.permissionMiddleware = container.resolve(PermissionMiddleware);
+    this.bodyValidationMiddleware = container.resolve(BodyValidationMiddleware);
+    this.imageUpdateMiddleware = container.resolve(imageUpdateMiddleware);
+    this.busesController = container.resolve(BusesController);
   }
 
   configureRoutes() {
     this.app
       .route(`/v1/buses`)
-      .all(jwtMiddleware.checkValidToken)
+      .all(this.jwtMiddleware.checkValidToken)
       .get(
-        PermissionMiddleware.permissionsFlagsRequired(
+        this.permissionMiddleware.permissionsFlagsRequired(
           permissionsFlags.TRIP_GUIDE
         ),
-        busesController.listBuses
+        this.busesController.listBuses
       )
       .post(
         body('busModel')
@@ -37,24 +51,26 @@ export class BusesRoutes extends CommonRoutesConfig {
           .escape()
           .matches(/^[0-9]+$/),
         body('busType').optional().trim().escape().isString(),
-        bodyValidationMiddleware.verifyBodyFieldsError([
+        this.bodyValidationMiddleware.verifyBodyFieldsError([
           'busModel',
           'seats',
           'image',
           'busType',
         ]),
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
-        busesController.addBus
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        ),
+        this.busesController.addBus
       );
 
     this.app
       .route(`/v1/buses/:busId`)
-      .all(jwtMiddleware.checkValidToken)
+      .all(this.jwtMiddleware.checkValidToken)
       .get(
-        PermissionMiddleware.permissionsFlagsRequired(
+        this.permissionMiddleware.permissionsFlagsRequired(
           permissionsFlags.TRIP_GUIDE
         ),
-        busesController.getBusById
+        this.busesController.getBusById
       )
       .patch(
         body('busModel')
@@ -70,19 +86,23 @@ export class BusesRoutes extends CommonRoutesConfig {
           .matches(/^[0-9]+$/)
           .withMessage('seat number must only contain numbers'),
         body('busType').optional().trim().escape().isString(),
-        bodyValidationMiddleware.verifyBodyFieldsError([
+        this.bodyValidationMiddleware.verifyBodyFieldsError([
           'busModel',
           'seats',
           'image',
           'busType',
         ]),
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
-        imageUpdateMiddleware.updateImage('bus'),
-        busesController.updateBus
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        ),
+        this.imageUpdateMiddleware.updateImage('bus'),
+        this.busesController.updateBus
       )
       .delete(
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
-        busesController.deleteBus
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        ),
+        this.busesController.deleteBus
       );
 
     return this.app;

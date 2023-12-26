@@ -6,9 +6,11 @@ import rateLimit from 'express-rate-limit';
 import { Jwt } from '../../common/types/jwt';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
+import { injectable } from 'inversify';
 
 const log: debug.IDebugger = debug('app:Jwt-Middlware');
 
+@injectable()
 class JwtMiddleware {
   /**
    * Middleware function to check the validity of a JWT token in the request header.
@@ -142,5 +144,4 @@ class JwtMiddleware {
   });
 }
 
-export default new JwtMiddleware();
 export { JwtMiddleware };

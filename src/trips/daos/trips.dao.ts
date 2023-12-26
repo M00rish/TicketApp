@@ -1,49 +1,81 @@
 import debug from 'debug';
 import { millisecondsToMinutes } from 'date-fns';
 import shortid from 'shortid';
+import { injectable, inject, LazyServiceIdentifier } from 'inversify';
+import getDecorators from 'inversify-inject-decorators';
 
-import mongooseService, {
-  MongooseService,
-} from '../../common/service/mongoose.service';
-import citiesDao from '../../cities/daos/cities.dao';
-import busesDao from '../../buses/daos/buses.dao';
+import mongooseService from '../../common/service/mongoose.service';
+import { CitiesDao } from '../../cities/daos/cities.dao';
+import { BusesDao } from '../../buses/daos/buses.dao';
 import { CreateTripDto } from '../dtos/create.trip.dto';
 import { PatchTripDto } from '../dtos/patch.trips.dto';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
-import ticketsService, {
-  TicketsService,
-} from '../../tickets/services/tickets.service';
-import schedulerService, {
-  SchedulerService,
-} from '../../common/service/scheduler.service';
-import CommonService from '../../common/service/common.service';
+import { TicketsService } from '../../tickets/services/tickets.service';
+import { SchedulerService } from '../../common/service/scheduler.service';
+import { BusesService } from '../../buses/services/buses.service';
+import { CitiesService } from '../../cities/services/cities.service';
+import { CommonService } from '../../common/service/common.service';
+import { TYPES } from '../../ioc/types';
+import { container } from '../../ioc/inversify.config';
 
 const log: debug.IDebugger = debug('app:trips-dao');
 
+const { lazyInject } = getDecorators(container);
+
+@injectable()
 class TripsDao {
+  private schedulerService: SchedulerService;
+  private commonService!: CommonService;
+  private citiesService: CitiesService;
+  private ticketsService: TicketsService;
+  private citiesDao!: CitiesDao;
+  private busesDao!: BusesDao;
+  private busesService!: BusesService;
+
   constructor(
-    private schedulerService: SchedulerService,
-    private ticketsService: TicketsService,
-    private mongooseService: MongooseService
+    @inject(new LazyServiceIdentifier(() => TYPES.SchedulerService))
+    schedulerService: SchedulerService,
+    @inject(TYPES.CommonService)
+    commonService: CommonService,
+    @inject(TYPES.CitiesService)
+    citiesService: CitiesService,
+    @inject(TYPES.TicketsService)
+    ticketsService: TicketsService,
+    @inject(TYPES.CitiesDao)
+    citiesDao: CitiesDao,
+    @inject(TYPES.BusesDao)
+    busesDao: BusesDao,
+    @inject(TYPES.BusesService)
+    busesService: BusesService
   ) {
-    log('created new instance of TripsDao');
-    this.Trip = CommonService.getOrCreateModel(this.tripSchema, 'Trip');
+    this.schedulerService = schedulerService;
+    this.commonService = commonService;
+    this.citiesService = citiesService;
+    this.ticketsService = ticketsService;
+    this.citiesDao = citiesDao;
+    this.busesDao = busesDao;
+    this.busesService = busesService;
+
+    this.Trip = this.commonService.getOrCreateModel(this.tripSchema, 'Trip');
+    log('Created new instance of TripsDao');
   }
 
   /**
    * Retrieves a list of trips.
-   * @param limit - The maximum number of trips to retrieve.
-   * @param page - The page number of the trips to retrieve.
+   *
+   * @param limit The maximum number of trips to retrieve. Default is 25.
+   * @param page The page number of the trips to retrieve. Default is 0.
    * @returns A promise that resolves to an array of trips.
-   * @throws If an error occurs while retrieving the trips.
+   * @throws Throws an error if there is an issue retrieving the trips.
    */
-  async listTrips(limit = 25, page = 0) {
+  public async listTrips(limit = 25, page = 0) {
     try {
-      return await this.Trip.find()
+      const trips = await this.Trip.find()
         .limit(limit)
         .skip(limit * page)
         .exec();
+      return trips;
     } catch (error) {
       throw error;
     }
@@ -55,7 +87,7 @@ class TripsDao {
    * @returns The ID of the newly added trip.
    * @throws Throws an error if there is an issue adding the trip.
    */
-  async addTrip(tripFields: CreateTripDto) {
+  public async createTrip(tripFields: CreateTripDto) {
     try {
       const tripId = shortid.generate();
       const trip = new this.Trip({
@@ -84,7 +116,7 @@ class TripsDao {
    * @param tripId - The ID of the trip to retrieve.
    * @returns The trip object if found, otherwise throws an error.
    */
-  async getTripById(tripId: string) {
+  public async getById(tripId: string) {
     try {
       const trip = await this.Trip.findOne({ _id: tripId }).exec();
       if (!trip)
@@ -107,7 +139,7 @@ class TripsDao {
    * @returns The ID of the updated trip.
    * @throws AppError if the trip is not found, has already been completed, or if there is an error updating the trip.
    */
-  async updateTripById(tripId: string, tripFields: PatchTripDto) {
+  public async updateById(tripId: string, tripFields: PatchTripDto) {
     try {
       const trip = await this.Trip.findById({ _id: tripId }).exec();
       if (!trip)
@@ -161,7 +193,7 @@ class TripsDao {
    * @param tripId - The ID of the trip to delete.
    * @throws {AppError} If the trip is not found.
    */
-  async deleteTripById(tripId: string) {
+  public async deleteById(tripId: string) {
     try {
       const trip = await this.Trip.deleteOne({ _id: tripId }).exec();
       if (trip.deletedCount === 0)
@@ -183,7 +215,7 @@ class TripsDao {
    * Also deletes all associated tickets.
    * @throws {Error} If an error occurs while deleting the trips or tickets.
    */
-  async deleteAllTrips() {
+  public async deleteAllTrips() {
     try {
       await this.Trip.deleteMany({}).exec();
       await this.ticketsService.deleteAllTickets();
@@ -192,20 +224,22 @@ class TripsDao {
     }
   }
 
-  //TODO : move to buses dao
-  validateBusExists = async (BusId: string) => {
-    const busExists = await busesDao.Bus.exists({ _id: BusId });
-    return busExists;
-  };
-
-  // TODO : test after bus testing
-  async validateBusAvailability(BusId: string) {
+  /**
+   * Validates the availability of a bus for a given trip.
+   * Checks if there is any active trip with overlapping departure and arrival times.
+   *
+   * @param {string} BusId - The ID of the bus to validate availability for.
+   * @returns {Promise<boolean>} - A promise that resolves to true if the bus is available, false otherwise.
+   * @throws {Error} - If there is an error while validating the bus availability.
+   */
+  public async validateBusAvailability(BusId: string) {
     try {
-      const trip = this.mongooseService
-        .getMongoose()
-        .model('Trip', this.tripSchema);
+      //TODO: recheck
+      // const trip = this.mongooseService
+      //   .getMongoose()
+      //   .model('Trip', this.tripSchema);
 
-      const tripWithSameTime = await trip.exists({
+      const tripWithSameTime = await this.Trip.exists({
         busId: BusId,
         Status: 'active',
         $or: [
@@ -294,10 +328,17 @@ class TripsDao {
     }
   }
 
-  // TODO : test after cities testing
-  async validateDepartureCity(departureCityName: string) {
+  /**
+   * Validates the departure city by checking if it exists in the cities service.
+   * @param departureCityName - The name of the departure city to validate.
+   * @returns A boolean indicating whether the departure city is valid or not.
+   * @throws Throws an error if there is an error while validating the departure city.
+   */
+  public async validateDepartureCity(departureCityName: string) {
     try {
-      const departureCity = await citiesDao.getcityByName(departureCityName);
+      const departureCity = await this.citiesService.getCityByName(
+        departureCityName
+      );
 
       if (!departureCity) return false;
 
@@ -306,10 +347,18 @@ class TripsDao {
       throw error;
     }
   }
-  // TODO : test after cities testing
-  async validateArrivalCity(arrivalCityName: string) {
+
+  /**
+   * Validates the arrival city by checking if it exists and if it is different from the departure city.
+   * @param arrivalCityName - The name of the arrival city to validate.
+   * @returns A boolean indicating whether the arrival city is valid or not.
+   * @throws Throws an error if there is an issue with the validation process.
+   */
+  public async validateArrivalCity(arrivalCityName: string) {
     try {
-      const arrivalCity = await citiesDao.getcityByName(arrivalCityName);
+      const arrivalCity = await this.citiesService.getCityByName(
+        arrivalCityName
+      );
 
       if (!arrivalCity) return false;
 
@@ -334,7 +383,7 @@ class TripsDao {
    * @param seatNumber - The seat number to be added to the booked seats.
    * @throws {AppError} If the trip is not found.
    */
-  async updateBookedSeats(tripId: string, seatNumber: Number) {
+  public async updateBookedSeats(tripId: string, seatNumber: Number) {
     try {
       const trip = await this.Trip.findById(tripId).exec();
       if (!trip)
@@ -359,7 +408,7 @@ class TripsDao {
    * @param seatNumber - The seat number to be removed.
    * @throws {AppError} If the trip is not found.
    */
-  async removeBookedSeat(tripId: string, seatNumber: Number) {
+  public async removeBookedSeat(tripId: string, seatNumber: Number) {
     try {
       const trip = await this.Trip.findById(tripId).exec();
       if (!trip)
@@ -383,7 +432,7 @@ class TripsDao {
    * Resets the booked seats for all trips.
    * @throws {Error} If an error occurs while resetting the booked seats.
    */
-  async resetBookedSeatsForAllTrips() {
+  public async resetBookedSeatsForAllTrips() {
     try {
       await this.Trip.updateMany({}, { bookedSeats: [] }).exec();
     } catch (error) {
@@ -395,7 +444,7 @@ class TripsDao {
    * Updates the status of a trip.
    * @param tripId - The ID of the trip to update.
    */
-  async updateTripStatus(tripId: string) {
+  public async updateTripStatus(tripId: string) {
     const trip = await this.Trip.findById({ _id: tripId }).exec();
     if (!trip) return;
 
@@ -404,14 +453,14 @@ class TripsDao {
     }
   }
 
-  schema = this.mongooseService.getMongoose().Schema;
+  schema = mongooseService.getMongoose().Schema;
 
   tripSchema = new this.schema(
     {
       _id: { type: this.schema.Types.String },
       departureCity: {
         type: this.schema.Types.String,
-        ref: citiesDao.City,
+        ref: this.citiesDao.City,
         required: true,
         validate: {
           validator: this.validateDepartureCity,
@@ -420,7 +469,7 @@ class TripsDao {
       },
       arrivalCity: {
         type: this.schema.Types.String,
-        ref: citiesDao.City,
+        ref: this.citiesDao.City,
         required: true,
         validate: [
           {
@@ -455,11 +504,11 @@ class TripsDao {
       },
       busId: {
         type: this.schema.Types.String,
-        ref: busesDao.Bus,
+        ref: this.busesDao.Bus, // TODO: update and use commonService.getOrCreateModel instead
         required: true,
         validate: [
           {
-            validator: this.validateBusExists,
+            validator: this.busesService.validateBusExists,
             message: 'Bus does not exist',
           },
           {
@@ -480,8 +529,7 @@ class TripsDao {
     next();
   });
 
-  Trip = CommonService.getOrCreateModel(this.tripSchema, 'Trip');
+  Trip = this.commonService.getOrCreateModel(this.tripSchema, 'Trip');
 }
 
-export default new TripsDao(schedulerService, ticketsService, mongooseService);
 export { TripsDao };

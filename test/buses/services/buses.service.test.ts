@@ -255,4 +255,54 @@ describe('BusesService', () => {
       expect(getBusByIdStub.calledOnceWithExactly(resourceId)).to.be.true;
     });
   });
+
+  describe('validateBusExists', () => {
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let busesDao = new BusesDao(commonService);
+    let busesService = new BusesService(busesDao);
+    let validateBusExistsStub: SinonStub;
+
+    beforeEach(() => {
+      validateBusExistsStub = sinon.stub(busesDao, 'validateBusExists');
+    });
+
+    afterEach(() => {
+      validateBusExistsStub.restore();
+    });
+
+    it('should return true if the bus exists', async () => {
+      const busId = '123';
+      validateBusExistsStub.resolves(true);
+
+      const result = await busesService.validateBusExists(busId);
+
+      expect(result).to.be.true;
+      expect(validateBusExistsStub.calledWith(busId)).to.be.true;
+    });
+
+    it('should return false if the bus does not exist', async () => {
+      const busId = '123';
+      validateBusExistsStub.resolves(false);
+
+      const result = await busesService.validateBusExists(busId);
+
+      expect(result).to.be.false;
+      expect(validateBusExistsStub.calledWith(busId)).to.be.true;
+    });
+
+    it('should propagate the error if the database operation fails', async () => {
+      const busId = '123';
+      const error = new Error('Database error');
+      validateBusExistsStub.rejects(error);
+
+      try {
+        await busesService.validateBusExists(busId);
+      } catch (err) {
+        expect(err).to.eql(error);
+      }
+
+      expect(validateBusExistsStub.calledWith(busId)).to.be.true;
+    });
+  });
 });

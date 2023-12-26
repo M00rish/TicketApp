@@ -1,78 +1,97 @@
 import express from 'express';
 import { body } from 'express-validator';
 
+import { container } from '../ioc/inversify.config';
 import { CommonRoutesConfig } from '../common/common.routes.config';
-import PermissionMiddleware from '../common/middleware/common.permission.middleware';
+import { PermissionMiddleware } from '../common/middlewares/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
-import jwtMiddleware from '../auth/middleware/jwt.middleware';
-import reviewsController from './controllers/reviews.controllers';
-import bodyValidationMiddleware from '../common/middleware/body.validation.middleware';
+import { JwtMiddleware } from '../auth/middleware/jwt.middleware';
+import { ReviewsController } from './controllers/reviews.controllers';
+import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
 
 export class ReviewsRoutes extends CommonRoutesConfig {
+  private jwtMiddleware;
+  private reviewsController;
+  private bodyValidationMiddleware;
+  private permissionMiddleware;
+
   constructor(app: express.Application) {
     super(app, 'ReviewsRoutes');
+
+    this.jwtMiddleware = container.resolve(JwtMiddleware);
+    this.reviewsController = container.resolve(ReviewsController);
+    this.bodyValidationMiddleware = container.resolve(BodyValidationMiddleware);
+    this.permissionMiddleware = container.resolve(PermissionMiddleware);
   }
 
   configureRoutes(): express.Application {
     this.app
       .route(`/v1/trips/:tripId/reviews`)
       .get([
-        jwtMiddleware.checkValidToken,
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
-        reviewsController.getReviewsByTripId,
+        this.jwtMiddleware.checkValidToken,
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.USER
+        ),
+        this.reviewsController.getReviewsByTripId,
       ])
       .post([
-        jwtMiddleware.checkValidToken,
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
+        this.jwtMiddleware.checkValidToken,
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.USER
+        ),
         body('ratings').isNumeric(),
         body('reviewText').isString(),
-        bodyValidationMiddleware.verifyBodyFieldsError([
+        this.bodyValidationMiddleware.verifyBodyFieldsError([
           'ratings',
           'reviewText',
         ]),
-        reviewsController.createReview,
+        this.reviewsController.createReview,
       ])
       .delete([
-        jwtMiddleware.checkValidToken,
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
-        reviewsController.removeReviewsByTripId,
+        this.jwtMiddleware.checkValidToken,
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        ),
+        this.reviewsController.removeReviewsByTripId,
       ]);
 
     this.app
       .route(`/v1/users/:userId/reviews`)
       .get([
-        jwtMiddleware.checkValidToken,
-        PermissionMiddleware.onlySameUserOrAdminCanAccess,
-        reviewsController.getReviewsByUserId,
+        this.jwtMiddleware.checkValidToken,
+        this.permissionMiddleware.onlySameUserOrAdminCanAccess,
+        this.reviewsController.getReviewsByUserId,
       ])
       .delete([
-        jwtMiddleware.checkValidToken,
-        PermissionMiddleware.onlySameUserOrAdminCanAccess,
-        reviewsController.removeReviewsByUserId,
+        this.jwtMiddleware.checkValidToken,
+        this.permissionMiddleware.onlySameUserOrAdminCanAccess,
+        this.reviewsController.removeReviewsByUserId,
       ]);
 
     this.app
       .route(`/v1/reviews/:reviewId`)
       .get([
-        jwtMiddleware.checkValidToken,
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
-        reviewsController.getReviewById,
+        this.jwtMiddleware.checkValidToken,
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.USER
+        ),
+        this.reviewsController.getReviewById,
       ])
       .patch([
-        jwtMiddleware.checkValidToken,
-        PermissionMiddleware.onlyAdminOrUserWhoCreatedReviewCanAccess,
+        this.jwtMiddleware.checkValidToken,
+        this.permissionMiddleware.onlyAdminOrUserWhoCreatedReviewCanAccess,
         body('ratings').isNumeric(),
         body('reviewText').isString(),
-        bodyValidationMiddleware.verifyBodyFieldsError([
+        this.bodyValidationMiddleware.verifyBodyFieldsError([
           'ratings',
           'reviewText',
         ]),
-        reviewsController.updateReviewById,
+        this.reviewsController.updateReviewById,
       ])
       .delete([
-        jwtMiddleware.checkValidToken,
-        PermissionMiddleware.onlyAdminOrUserWhoCreatedReviewCanAccess,
-        reviewsController.removeReviewById,
+        this.jwtMiddleware.checkValidToken,
+        this.permissionMiddleware.onlyAdminOrUserWhoCreatedReviewCanAccess,
+        this.reviewsController.removeReviewById,
       ]);
 
     return this.app;

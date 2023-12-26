@@ -1,21 +1,46 @@
 import { Agenda } from '@hokify/agenda';
 import debug from 'debug';
+import { container } from '../../ioc/inversify.config';
+import getDecorators from 'inversify-inject-decorators';
 
 import mongooseService from './mongoose.service';
-import tripsService from '../../trips/services/trips.service';
-import ticketsService from '../../tickets/services/tickets.service';
+import { TripsService } from '../../trips/services/trips.service';
+import { TicketsService } from '../../tickets/services/tickets.service';
+import { injectable, inject } from 'inversify';
+import { TYPES } from '../../ioc/types';
+
+const { lazyInject } = getDecorators(container);
 
 const log: debug.IDebugger = debug('app:scheduler-service');
 
+/**
+ * Represents a scheduler service that manages the scheduling and updating of trip and ticket statuses.
+ */
+@injectable()
 class SchedulerService {
+  private ticketsService: TicketsService;
+  private tripsService: TripsService;
   private agenda: Agenda;
 
-  constructor() {
+  /**
+   * Creates a new instance of the SchedulerService.
+   * @param tripsService The trips service.
+   * @param ticketsService The tickets service.
+   */
+  constructor(
+    @inject(TYPES.TripsService) tripsService: TripsService,
+    @inject(TYPES.TicketsService)
+    ticketsService: TicketsService
+  ) {
     this.agenda = new Agenda({
       db: { address: mongooseService.DB_URI },
     });
 
+    this.tripsService = tripsService;
+    this.ticketsService = ticketsService;
     this.initAgenda();
+
+    log('Created new instance of SchedulerService');
   }
 
   /**
@@ -25,7 +50,7 @@ class SchedulerService {
   private async initAgenda(): Promise<void> {
     this.agenda.define(`tripStatusJob`, async (job) => {
       try {
-        tripsService.updateTripStatus(job.attrs.data.tripId);
+        this.tripsService.updateTripStatus(job.attrs.data.tripId);
       } catch (error) {
         throw error;
       }
@@ -33,7 +58,7 @@ class SchedulerService {
 
     this.agenda.define(`ticketStatusJob`, async (job) => {
       try {
-        ticketsService.updateTicketStatusByTrip(job.attrs.data.tripId);
+        this.ticketsService.updateTicketStatusByTrip(job.attrs.data.tripId);
       } catch (error) {
         throw error;
       }
@@ -117,5 +142,4 @@ class SchedulerService {
   }
 }
 
-export default new SchedulerService();
 export { SchedulerService };

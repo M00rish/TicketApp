@@ -1,13 +1,16 @@
 import debug from 'debug';
 import { CRUD } from '../../common/interfaces/crud.interface';
-import busesDao, { BusesDao } from '../daos/buses.dao';
+import { BusesDao } from '../daos/buses.dao';
 import { PatchBusDto } from '../dtos/patch.bus.dto';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:buses-service');
 
+@injectable()
 class BusesService implements CRUD {
-  constructor(private busesDao: BusesDao) {
-    log('created new instance of BusesService');
+  constructor(@inject(TYPES.BusesDao) private busesDao: BusesDao) {
+    log('Created new instance of BusesService');
   }
 
   /**
@@ -57,7 +60,15 @@ class BusesService implements CRUD {
   async getById(resourceId: string) {
     return await this.busesDao.getBusById(resourceId);
   }
+
+  /**
+   * Validates if a bus with the given ID exists.
+   * @param busId - The ID of the bus to validate.
+   * @returns A promise that resolves to a boolean indicating if the bus exists.
+   */
+  async validateBusExists(busId: string) {
+    return await this.busesDao.validateBusExists(busId);
+  }
 }
 
-export default new BusesService(busesDao);
 export { BusesService };

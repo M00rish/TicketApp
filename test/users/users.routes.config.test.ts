@@ -55,7 +55,7 @@ const newLastName2 = 'may';
 describe('users and auth', function () {
   let request: supertest.SuperAgentTest;
   before(async function () {
-    mongooseService.connectWithRetry();
+    await mongooseService.connectWithRetry();
     await mongooseService.insertTestUsers([User, TripGuide, Admin]);
     request = supertest.agent(app);
   });
@@ -94,7 +94,7 @@ describe('users and auth', function () {
     });
   });
 
-  describe('User Role', function () {
+  describe('User', function () {
     it('should allow a POST to /v1/login and return error message when password or email is wrong', async function () {
       const response = await request.post('/v1/login').send({
         email: User.email,

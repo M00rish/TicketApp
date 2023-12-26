@@ -1,12 +1,15 @@
 import express from 'express';
 import debug from 'debug';
-import authService, { AuthService } from '../services/auth.service';
+import { AuthService } from '../services/auth.service';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:auth-controller');
 
+@injectable()
 class AuthController {
-  constructor(private authService: AuthService) {
+  constructor(@inject(TYPES.AuthService) private authService: AuthService) {
     log('Created new instance of AuthController');
     this.logIn = this.logIn.bind(this);
     this.logOut = this.logOut.bind(this);
@@ -33,5 +36,4 @@ class AuthController {
   }
 }
 
-export default new AuthController(authService);
 export { AuthController };

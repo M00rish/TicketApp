@@ -5,20 +5,21 @@ import bcrypt from 'bcryptjs';
 import { CreateUserDto } from '../dtos/create.user.dto';
 import { PutUserDto } from '../dtos/put.user.dto';
 import { PatchUserDto } from '../dtos/patch.user.dto';
-import mongooseService, {
-  MongooseService,
-} from '../../common/service/mongoose.service';
+import mongooseService from '../../common/service/mongoose.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
-import commonService, {
-  CommonService,
-} from '../../common/service/common.service';
+import { CommonService } from '../../common/service/common.service';
+import { injectable, inject } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:in-memory-dao');
 
+@injectable()
 class UsersDao {
-  constructor(private commonService: CommonService) {
-    log('created new instance of UsersDao');
+  constructor(
+    @inject(TYPES.CommonService) private commonService: CommonService
+  ) {
+    log('Created new instance of UsersDao');
     this.User = this.commonService.getOrCreateModel(this.userSchema, 'User');
   }
 
@@ -28,7 +29,7 @@ class UsersDao {
    * @returns The ID of the newly created user.
    * @throws An error If there was an error creating the user.
    */
-  async createUser(userFields: CreateUserDto): Promise<string> {
+  async createUser(userFields: CreateUserDto) {
     try {
       const userId = shortid.generate();
       const user = new this.User({
@@ -50,10 +51,7 @@ class UsersDao {
    * @returns {Promise<string>} - A promise that resolves with the ID of the updated user.
    * @throws An Error if the user is not found or if the update fails.
    */
-  async updateUserById(
-    userId: string,
-    userFields: PatchUserDto | PutUserDto
-  ): Promise<string> {
+  async updateUserById(userId: string, userFields: PatchUserDto | PutUserDto) {
     try {
       const user = await this.User.findById({ _id: userId }).exec();
       if (!user)
@@ -90,7 +88,7 @@ class UsersDao {
    * @returns A Promise that resolves to the retrieved user.
    * @throws An AppError if the user is not found.
    */
-  async getUserByEmail(email: string): Promise<any> {
+  async getUserByEmail(email: string) {
     try {
       const user = await this.User.findOne({ email: email }).exec();
 
@@ -114,7 +112,7 @@ class UsersDao {
    * @returns {Promise<User>} A promise that resolves with the retrieved user.
    * @throws An AppError If the user is not found.
    */
-  async getUserById(userId: string): Promise<any> {
+  async getUserById(userId: string) {
     try {
       const user = await this.User.findOne({ _id: userId })
         .select('-refreshToken -password')
@@ -140,7 +138,7 @@ class UsersDao {
    * @returns A Promise that resolves to an array of User objects.
    * @throws An error if there was a problem retrieving the users.
    */
-  async listUsers(limit = 25, page = 0): Promise<any> {
+  async listUsers(limit = 25, page = 0) {
     try {
       const users = await this.User.find()
         .limit(limit)
@@ -157,7 +155,7 @@ class UsersDao {
    * @param {string} userId - The ID of the user to delete.
    * @throws An AppError If the user is not found or if there is an error deleting the user.
    */
-  async deleteUserById(userId: string): Promise<any> {
+  async deleteUserById(userId: string) {
     try {
       const user = await this.User.findById({ _id: userId }).exec();
 
@@ -303,5 +301,4 @@ class UsersDao {
   User = this.commonService.getOrCreateModel(this.userSchema, 'User');
 }
 
-export default new UsersDao(commonService);
 export { UsersDao };

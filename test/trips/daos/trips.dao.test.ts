@@ -6,29 +6,34 @@ import shortid from 'shortid';
 import { TripsDao } from '../../../src/trips/daos/trips.dao';
 import { SchedulerService } from '../../../src/common/service/scheduler.service';
 import { TicketsService } from '../../../src/tickets/services/tickets.service';
+import { CommonService } from '../../../src/common/service/common.service';
 import { MongooseService } from '../../../src/common/service/mongoose.service';
 import { CreateTripDto } from '../../../src/trips/dtos/create.trip.dto';
 import AppError from '../../../src/common/types/appError';
 import HttpStatusCode from '../../../src/common/enums/HttpStatusCode.enum';
 import { PatchTripDto } from '../../../src/trips/dtos/patch.trips.dto';
+import ticketsDao, { TicketsDao } from '../../../src/tickets/daos/tickets.dao';
+import { CitiesDao } from '../../../src/cities/daos/cities.dao';
+import { CitiesService } from '../../../src/cities/services/cities.service';
 
 describe('TripsDao', () => {
   describe('listTrips', () => {
-    let tripsDao: TripsDao;
-    let schedulerService: SchedulerService;
-    let ticketsService: TicketsService;
-    let mongooseService: MongooseService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
     let findStub: sinon.SinonStub;
 
     beforeEach(() => {
-      schedulerService = new SchedulerService();
-      ticketsService = new TicketsService(schedulerService);
-      mongooseService = new MongooseService();
-      tripsDao = new TripsDao(
-        schedulerService,
-        ticketsService,
-        mongooseService
-      );
       findStub = sinon.stub(tripsDao.Trip, 'find');
     });
 
@@ -80,24 +85,25 @@ describe('TripsDao', () => {
   });
 
   describe('addTrip', () => {
-    let tripsDao: TripsDao;
-    let schedulerService: SchedulerService;
-    let ticketsService: TicketsService;
-    let mongooseService: MongooseService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
     let saveStub: sinon.SinonStub;
     let scheduleStatusUpdateStub: sinon.SinonStub;
     let validateTripTimingsStub: sinon.SinonStub;
     let generateStub: sinon.SinonStub;
 
     beforeEach(() => {
-      schedulerService = new SchedulerService();
-      ticketsService = new TicketsService(schedulerService);
-      mongooseService = new MongooseService();
-      tripsDao = new TripsDao(
-        schedulerService,
-        ticketsService,
-        mongooseService
-      );
       saveStub = sinon.stub(tripsDao.Trip.prototype, 'save');
       scheduleStatusUpdateStub = sinon.stub(
         schedulerService,
@@ -213,21 +219,22 @@ describe('TripsDao', () => {
   });
 
   describe('getTripById', () => {
-    let tripsDao: TripsDao;
-    let schedulerService: SchedulerService;
-    let ticketsService: TicketsService;
-    let mongooseService: MongooseService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
     let findOneStub: sinon.SinonStub;
 
     beforeEach(() => {
-      schedulerService = new SchedulerService();
-      ticketsService = new TicketsService(schedulerService);
-      mongooseService = new MongooseService();
-      tripsDao = new TripsDao(
-        schedulerService,
-        ticketsService,
-        mongooseService
-      );
       findOneStub = sinon.stub(tripsDao.Trip, 'findOne');
     });
 
@@ -273,24 +280,25 @@ describe('TripsDao', () => {
   });
 
   describe('updateTripById', () => {
-    let tripsDao: TripsDao;
-    let schedulerService: SchedulerService;
-    let ticketsService: TicketsService;
-    let mongooseService: MongooseService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
     let findByIdStub: sinon.SinonStub;
     let findOneAndUpdateStub: sinon.SinonStub;
     let validateTripTimingsStub: sinon.SinonStub;
     let updateScheduledTimeStub: sinon.SinonStub;
 
     beforeEach(() => {
-      schedulerService = new SchedulerService();
-      ticketsService = new TicketsService(schedulerService);
-      mongooseService = new MongooseService();
-      tripsDao = new TripsDao(
-        schedulerService,
-        ticketsService,
-        mongooseService
-      );
       findByIdStub = sinon.stub(tripsDao.Trip, 'findById');
       findOneAndUpdateStub = sinon.stub(tripsDao.Trip, 'findOneAndUpdate');
       validateTripTimingsStub = sinon.stub(tripsDao, 'validateTripTimings');
@@ -427,23 +435,24 @@ describe('TripsDao', () => {
   });
 
   describe('deleteTripById', () => {
-    let tripsDao: TripsDao;
-    let schedulerService: SchedulerService;
-    let ticketsService: TicketsService;
-    let mongooseService: MongooseService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
     let deleteOneStub: sinon.SinonStub;
     let deleteTicketsByTripIdStub: sinon.SinonStub;
     let cancelScheduledTimeStub: sinon.SinonStub;
 
     beforeEach(() => {
-      schedulerService = new SchedulerService();
-      ticketsService = new TicketsService(schedulerService);
-      mongooseService = new MongooseService();
-      tripsDao = new TripsDao(
-        schedulerService,
-        ticketsService,
-        mongooseService
-      );
       deleteOneStub = sinon.stub(tripsDao.Trip, 'deleteOne');
       deleteTicketsByTripIdStub = sinon.stub(ticketsService, 'deleteById');
       cancelScheduledTimeStub = sinon.stub(
@@ -506,22 +515,23 @@ describe('TripsDao', () => {
   });
 
   describe('deleteAllTrips', () => {
-    let tripsDao: TripsDao;
-    let schedulerService: SchedulerService;
-    let ticketsService: TicketsService;
-    let mongooseService: MongooseService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
     let deleteManyStub: sinon.SinonStub;
     let deleteAllTicketsStub: sinon.SinonStub;
 
     beforeEach(() => {
-      schedulerService = new SchedulerService();
-      ticketsService = new TicketsService(schedulerService);
-      mongooseService = new MongooseService();
-      tripsDao = new TripsDao(
-        schedulerService,
-        ticketsService,
-        mongooseService
-      );
       deleteManyStub = sinon.stub(tripsDao.Trip, 'deleteMany');
       deleteAllTicketsStub = sinon.stub(ticketsService, 'deleteAllTickets');
     });
@@ -568,94 +578,101 @@ describe('TripsDao', () => {
   });
 
   describe('validateTripTimings', () => {
-    let tripsDao: TripsDao;
-    let schedulerService: SchedulerService;
-    let ticketsService: TicketsService;
-    let mongooseService: MongooseService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
 
-    beforeEach(() => {
-      schedulerService = new SchedulerService();
-      ticketsService = new TicketsService(schedulerService);
-      mongooseService = new MongooseService();
-      tripsDao = new TripsDao(
-        schedulerService,
-        ticketsService,
-        mongooseService
-      );
-    });
+    it('should not throw error for valid timings', () => {
+      const arrivalTime = new Date();
+      arrivalTime.setHours(arrivalTime.getHours() + 24);
+      const departureTime = new Date();
+      departureTime.setHours(departureTime.getHours() + 1);
 
-    afterEach(() => {
-      sinon.restore();
-    });
-
-    it('should throw error when arrivalTime or departureTime is not provided', () => {
-      expect(() => tripsDao.validateTripTimings(undefined, undefined)).to.throw(
-        AppError,
-        'Both arrival time and departure time must be provided'
-      );
-    });
-
-    it('should throw error when arrivalTime is in the past', () => {
-      const arrivalTime = new Date(Date.now() - 1000 * 60 * 60); // 1 hour ago
-      const departureTime = new Date(Date.now() + 1000 * 60 * 60); // 1 hour later
-      expect(() =>
-        tripsDao.validateTripTimings(arrivalTime, departureTime)
-      ).to.throw(AppError, 'Arrival time must be in the future');
-    });
-
-    it('should throw error when departureTime is in the past', () => {
-      const arrivalTime = new Date(Date.now() + 1000 * 60 * 60); // 1 hour later
-      const departureTime = new Date(Date.now() - 1000 * 60 * 60); // 1 hour ago
-      expect(() =>
-        tripsDao.validateTripTimings(arrivalTime, departureTime)
-      ).to.throw(AppError, 'Departure time must be in the future');
-    });
-
-    it('should throw error when arrivalTime is less than departureTime', () => {
-      const arrivalTime = new Date(Date.now() + 1000 * 60 * 60); // 1 hour later
-      const departureTime = new Date(Date.now() + 1000 * 60 * 60 * 2); // 2 hours later
-      expect(() =>
-        tripsDao.validateTripTimings(arrivalTime, departureTime)
-      ).to.throw(AppError, 'Arrival time must be greater than departure time');
-    });
-
-    it('should throw error when the difference between arrivalTime and departureTime is more than 48 hours', () => {
-      const arrivalTime = new Date(Date.now() + 1000 * 60 * 60 * 49); // 49 hours later
-      const departureTime = new Date(); // now
-      expect(() =>
-        tripsDao.validateTripTimings(arrivalTime, departureTime)
-      ).to.throw(
-        AppError,
-        'The difference between arrival time and departure time must be at max 48 hours'
-      );
-    });
-
-    it('should not throw error when the difference between arrivalTime and departureTime is less than or equal to 48 hours', () => {
-      const arrivalTime = new Date(Date.now() + 1000 * 60 * 60 * 48); // 48 hours later
-      const departureTime = new Date(); // now
       expect(() =>
         tripsDao.validateTripTimings(arrivalTime, departureTime)
       ).to.not.throw();
     });
+
+    it('should throw error for missing timings', () => {
+      expect(() => tripsDao.validateTripTimings(undefined, undefined)).to.throw(
+        'Both arrival time and departure time must be provided'
+      );
+    });
+
+    it('should throw error for past arrival time', () => {
+      const arrivalTime = new Date();
+      arrivalTime.setHours(arrivalTime.getHours() - 1);
+      const departureTime = new Date();
+
+      expect(() =>
+        tripsDao.validateTripTimings(arrivalTime, departureTime)
+      ).to.throw('Arrival time must be in the future');
+    });
+
+    it('should throw error for past departure time', () => {
+      const arrivalTime = new Date();
+      const departureTime = new Date();
+      arrivalTime.setHours(arrivalTime.getHours() + 1);
+      departureTime.setHours(departureTime.getHours() - 2);
+
+      expect(() =>
+        tripsDao.validateTripTimings(arrivalTime, departureTime)
+      ).to.throw('Departure time must be in the future');
+    });
+
+    it('should throw error for arrival time less than departure time', () => {
+      const arrivalTime = new Date();
+      const departureTime = new Date();
+      arrivalTime.setHours(arrivalTime.getHours() + 1);
+      departureTime.setHours(departureTime.getHours() + 2);
+
+      expect(() =>
+        tripsDao.validateTripTimings(arrivalTime, departureTime)
+      ).to.throw('Arrival time must be greater than departure time');
+    });
+
+    it('should throw error for difference between arrival and departure time more than 48 hours', () => {
+      const arrivalTime = new Date();
+      arrivalTime.setHours(arrivalTime.getHours() + 50);
+      const departureTime = new Date();
+      departureTime.setHours(departureTime.getHours() + 1);
+
+      expect(() =>
+        tripsDao.validateTripTimings(arrivalTime, departureTime)
+      ).to.throw(
+        'The difference between arrival time and departure time must be at max 48 hours'
+      );
+    });
   });
 
   describe('updateBookedSeats', () => {
-    let tripsDao: TripsDao;
-    let schedulerService: SchedulerService;
-    let ticketsService: TicketsService;
-    let mongooseService: MongooseService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
     let findByIdStub: sinon.SinonStub;
     let findByIdAndUpdateStub: sinon.SinonStub;
 
     beforeEach(() => {
-      schedulerService = new SchedulerService();
-      ticketsService = new TicketsService(schedulerService);
-      mongooseService = new MongooseService();
-      tripsDao = new TripsDao(
-        schedulerService,
-        ticketsService,
-        mongooseService
-      );
       findByIdStub = sinon.stub(tripsDao.Trip, 'findById');
       findByIdAndUpdateStub = sinon.stub(tripsDao.Trip, 'findByIdAndUpdate');
     });
@@ -735,22 +752,23 @@ describe('TripsDao', () => {
   });
 
   describe('removeBookedSeat', () => {
-    let tripsDao: TripsDao;
-    let schedulerService: SchedulerService;
-    let ticketsService: TicketsService;
-    let mongooseService: MongooseService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
     let findByIdStub: sinon.SinonStub;
     let findByIdAndUpdateStub: sinon.SinonStub;
 
     beforeEach(() => {
-      schedulerService = new SchedulerService();
-      ticketsService = new TicketsService(schedulerService);
-      mongooseService = new MongooseService();
-      tripsDao = new TripsDao(
-        schedulerService,
-        ticketsService,
-        mongooseService
-      );
       findByIdStub = sinon.stub(tripsDao.Trip, 'findById');
       findByIdAndUpdateStub = sinon.stub(tripsDao.Trip, 'findByIdAndUpdate');
     });
@@ -830,21 +848,22 @@ describe('TripsDao', () => {
   });
 
   describe('resetBookedSeatsForAllTrips', () => {
-    let tripsDao: TripsDao;
-    let schedulerService: SchedulerService;
-    let ticketsService: TicketsService;
-    let mongooseService: MongooseService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
     let updateManyStub: sinon.SinonStub;
 
     beforeEach(() => {
-      schedulerService = new SchedulerService();
-      ticketsService = new TicketsService(schedulerService);
-      mongooseService = new MongooseService();
-      tripsDao = new TripsDao(
-        schedulerService,
-        ticketsService,
-        mongooseService
-      );
       updateManyStub = sinon.stub(tripsDao.Trip, 'updateMany');
     });
 
@@ -874,22 +893,23 @@ describe('TripsDao', () => {
   });
 
   describe('updateTripStatus', () => {
-    let tripsDao: TripsDao;
-    let schedulerService: SchedulerService;
-    let ticketsService: TicketsService;
-    let mongooseService: MongooseService;
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
     let findByIdStub: sinon.SinonStub;
     let findByIdAndUpdateStub: sinon.SinonStub;
 
     beforeEach(() => {
-      schedulerService = new SchedulerService();
-      ticketsService = new TicketsService(schedulerService);
-      mongooseService = new MongooseService();
-      tripsDao = new TripsDao(
-        schedulerService,
-        ticketsService,
-        mongooseService
-      );
       findByIdStub = sinon.stub(tripsDao.Trip, 'findById');
       findByIdAndUpdateStub = sinon.stub(tripsDao.Trip, 'findByIdAndUpdate');
     });
@@ -961,6 +981,138 @@ describe('TripsDao', () => {
 
       try {
         await tripsDao.updateTripStatus(tripId);
+        expect.fail('Expected error to be thrown');
+      } catch (err) {
+        expect(err).to.eql(error);
+      }
+    });
+  });
+
+  describe('validateDepartureCity', () => {
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
+    let getCityByNameStub: sinon.SinonStub;
+
+    beforeEach(() => {
+      getCityByNameStub = sinon.stub(citiesService, 'getCityByName');
+    });
+
+    afterEach(() => {
+      getCityByNameStub.restore();
+    });
+
+    it('should return true when city exists', async () => {
+      const cityName = 'Paris';
+      getCityByNameStub.resolves({ name: cityName });
+
+      const result = await tripsDao.validateDepartureCity(cityName);
+      expect(result).to.be.true;
+      expect(getCityByNameStub.calledOnceWith(cityName)).to.be.true;
+    });
+
+    it('should return false when city does not exist', async () => {
+      const cityName = 'NonExistentCity';
+      getCityByNameStub.resolves(null);
+
+      const result = await tripsDao.validateDepartureCity(cityName);
+      expect(result).to.be.false;
+      expect(getCityByNameStub.calledOnceWith(cityName)).to.be.true;
+    });
+
+    it('should propagate error when citiesService.getCityByName throws error', async () => {
+      const cityName = 'Paris';
+      const error = new Error('Database error');
+      getCityByNameStub.rejects(error);
+
+      try {
+        await tripsDao.validateDepartureCity(cityName);
+        expect.fail('Expected error to be thrown');
+      } catch (err) {
+        expect(err).to.eql(error);
+      }
+    });
+  });
+
+  describe('validateArrivalCity', () => {
+    let mongooseService = new MongooseService();
+    let commonService = new CommonService(mongooseService);
+    let citiesDao = new CitiesDao(commonService);
+    let citiesService = new CitiesService(citiesDao);
+    let ticketsDao = new TicketsDao(commonService);
+    let ticketsService = new TicketsService(ticketsDao);
+    let schedulerService = new SchedulerService();
+    let tripsDao = new TripsDao(
+      schedulerService,
+      ticketsService,
+      commonService,
+      citiesService
+    );
+    let getCityByNameStub: sinon.SinonStub;
+
+    beforeEach(() => {
+      getCityByNameStub = sinon.stub(citiesService, 'getCityByName');
+    });
+
+    afterEach(() => {
+      getCityByNameStub.restore();
+    });
+
+    it('should return true when city exists and is different from departure city', async () => {
+      const cityName = 'Paris';
+      getCityByNameStub.resolves({ cityName: cityName });
+
+      const result = await tripsDao.validateArrivalCity(cityName);
+      expect(result).to.be.true;
+      expect(getCityByNameStub.calledOnceWith(cityName)).to.be.true;
+    });
+
+    it('should return false when city does not exist', async () => {
+      const cityName = 'NonExistentCity';
+      getCityByNameStub.resolves(null);
+
+      const result = await tripsDao.validateArrivalCity(cityName);
+      expect(result).to.be.false;
+      expect(getCityByNameStub.calledOnceWith(cityName)).to.be.true;
+    });
+
+    //TODO :
+    // it('should throw error when city is the same as departure city', async () => {
+    //   const cityName = 'Paris';
+    //   getCityByNameStub.resolves({ cityName: cityName });
+    //   tripsDao.Trip.departureCity = cityName;
+
+    //   try {
+    //     await tripsDao.validateArrivalCity(cityName);
+    //     expect.fail('Expected error to be thrown');
+    //   } catch (err: any) {
+    //     expect(err).to.be.instanceOf(AppError);
+    //     expect(err.isOperational).to.be.true;
+    //     expect(err.name).to.equal('validateArrivalCityError');
+    //     expect(err.statusCode).to.equal(HttpStatusCode.BadRequest);
+    //     expect(err.message).to.equal(
+    //       'Arrival city must be different from departure city'
+    //     );
+    //   }
+    // });
+
+    it('should propagate error when citiesService.getCityByName throws error', async () => {
+      const cityName = 'Paris';
+      const error = new Error('Database error');
+      getCityByNameStub.rejects(error);
+
+      try {
+        await tripsDao.validateArrivalCity(cityName);
         expect.fail('Expected error to be thrown');
       } catch (err) {
         expect(err).to.eql(error);

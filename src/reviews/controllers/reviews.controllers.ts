@@ -1,13 +1,21 @@
 import express from 'express';
 import debug from 'debug';
 
-import reviewsService from '../services/reviews.service';
+import { injectable, inject } from 'inversify';
+import { ReviewsService } from '../services/reviews.service';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import AppError from '../../common/types/appError';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:reviews-dao');
 
+@injectable()
 class ReviewsController {
+  constructor(
+    @inject(TYPES.ReviewsService) private reviewsService: ReviewsService
+  ) {
+    log('Created new instance of ReviewsController');
+  }
   async getReviewsByTripId(
     req: express.Request,
     res: express.Response,
@@ -15,7 +23,7 @@ class ReviewsController {
   ) {
     const tripId = req.params.tripId;
     try {
-      const reviews = await reviewsService.getReviewsByTripId(tripId);
+      const reviews = await this.reviewsService.getReviewsByTripId(tripId);
       res.status(HttpStatusCode.Ok).json(reviews);
     } catch (error: any) {
       if (error instanceof AppError) {
@@ -41,7 +49,7 @@ class ReviewsController {
   ) {
     const userId = req.params.userId;
     try {
-      const reviews = await reviewsService.getReviewsByUserId(userId);
+      const reviews = await this.reviewsService.getReviewsByUserId(userId);
       res.status(HttpStatusCode.Ok).json(reviews);
     } catch (error: any) {
       if (error instanceof AppError) {
@@ -67,7 +75,7 @@ class ReviewsController {
   ) {
     const reviewId = req.params.reviewId;
     try {
-      const review = await reviewsService.getById(reviewId);
+      const review = await this.reviewsService.getById(reviewId);
       res.status(HttpStatusCode.Ok).json(review);
     } catch (error: any) {
       if (error instanceof AppError) {
@@ -95,7 +103,7 @@ class ReviewsController {
     reviewFields.tripId = req.params.tripId;
     reviewFields.userId = res.locals.jwt.userId;
     try {
-      const reviewId = await reviewsService.create(reviewFields);
+      const reviewId = await this.reviewsService.create(reviewFields);
       res.status(HttpStatusCode.Created).json({ _id: reviewId });
     } catch (error: any) {
       if (error instanceof AppError) {
@@ -122,7 +130,10 @@ class ReviewsController {
     const reviewId = req.params.reviewId;
     const reviewFields = req.body;
     try {
-      const review = await reviewsService.updateById(reviewId, reviewFields);
+      const review = await this.reviewsService.updateById(
+        reviewId,
+        reviewFields
+      );
       res.status(HttpStatusCode.NoContent).json({ _id: review });
     } catch (error: any) {
       if (error instanceof AppError) {
@@ -148,7 +159,7 @@ class ReviewsController {
   ) {
     const reviewId = req.params.reviewId;
     try {
-      await reviewsService.deleteById(reviewId);
+      await this.reviewsService.deleteById(reviewId);
       res.status(HttpStatusCode.NoContent).json();
     } catch (error: any) {
       if (error instanceof AppError) {
@@ -174,7 +185,7 @@ class ReviewsController {
   ) {
     const tripId = req.params.tripId;
     try {
-      await reviewsService.removeReviewsByTripId(tripId);
+      await this.reviewsService.removeReviewsByTripId(tripId);
       res.status(HttpStatusCode.NoContent).json();
     } catch (error: any) {
       if (error instanceof AppError) {
@@ -200,7 +211,7 @@ class ReviewsController {
   ) {
     const userId = req.params.userId;
     try {
-      await reviewsService.removeReviewsByUserId(userId);
+      await this.reviewsService.removeReviewsByUserId(userId);
       res.status(HttpStatusCode.NoContent).json();
     } catch (error: any) {
       if (error instanceof AppError) {
@@ -220,4 +231,4 @@ class ReviewsController {
   }
 }
 
-export default new ReviewsController();
+export { ReviewsController };

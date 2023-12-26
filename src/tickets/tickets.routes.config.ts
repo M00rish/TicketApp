@@ -1,46 +1,61 @@
 import express from 'express';
 import { body } from 'express-validator';
 
+import { container } from '../ioc/inversify.config';
 import { CommonRoutesConfig } from '../common/common.routes.config';
-import ticketsController from './controllers/tickets.controller';
-import jwtMiddleware from '../auth/middleware/jwt.middleware';
-import PermissionMiddleware from '../common/middleware/common.permission.middleware';
+import { TicketsController } from './controllers/tickets.controller';
+import { JwtMiddleware } from '../auth/middleware/jwt.middleware';
+import { PermissionMiddleware } from '../common/middlewares/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
-import bodyValidationMiddleware from '../common/middleware/body.validation.middleware';
+import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
 
 export class ticketsRoute extends CommonRoutesConfig {
+  private jwtMiddleware;
+  private permissionMiddleware;
+  private bodyValidationMiddleware;
+  private ticketsController;
+
   constructor(app: express.Application) {
     super(app, 'TicketsRoutes');
+
+    this.jwtMiddleware = container.resolve(JwtMiddleware);
+    this.permissionMiddleware = container.resolve(PermissionMiddleware);
+    this.bodyValidationMiddleware = container.resolve(BodyValidationMiddleware);
+    this.ticketsController = container.resolve(TicketsController);
   }
 
   configureRoutes() {
     this.app
       .route(`/v1/tickets`)
       .all(
-        jwtMiddleware.checkValidToken,
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN)
+        this.jwtMiddleware.checkValidToken,
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        )
       )
-      .get(ticketsController.getTickets)
-      .delete(ticketsController.deleteAllTickets);
+      .get(this.ticketsController.getTickets)
+      .delete(this.ticketsController.deleteAllTickets);
 
     this.app
       .route(`/v1/tickets/:ticketId`)
       .all(
-        jwtMiddleware.checkValidToken,
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN)
+        this.jwtMiddleware.checkValidToken,
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        )
       )
-      .get(ticketsController.getTicketById)
+      .get(this.ticketsController.getTicketById)
       .patch([
         body('status').isString(),
-        bodyValidationMiddleware.verifyBodyFieldsError(['status']),
-        ticketsController.updateTicketById,
+        this.bodyValidationMiddleware.verifyBodyFieldsError(['status']),
+        this.ticketsController.updateTicketById,
       ])
-      .delete(ticketsController.deleteTicketById);
+      .delete(this.ticketsController.deleteTicketById);
 
     this.app
       .route(`/v1/trips/:tripId/tickets/:seatNumber`)
-      .all(jwtMiddleware.checkValidToken)
-      .post(ticketsController.createTicket);
+      .all(this.jwtMiddleware.checkValidToken)
+      .post(this.ticketsController.createTicket);
 
     return this.app;
   }

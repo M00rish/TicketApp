@@ -4,16 +4,30 @@ import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import AppError from '../../common/types/appError';
 import mongooseService from '../../common/service/mongoose.service';
 import { CreateCityDto } from '../dtos/create.city.dto';
-import { PatchcityDto } from '../dtos/patch.city.dto';
+import { PatchCityDto } from '../dtos/patch.city.dto';
+import { CommonService } from '../../common/service/common.service';
+import { injectable, inject } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:city-dao');
 
-class citiesDao {
-  constructor() {
-    log('created new instance of cityesDao');
+@injectable()
+class CitiesDao {
+  constructor(
+    @inject(TYPES.CommonService) private commonService: CommonService
+  ) {
+    log('Created new instance of cityesDao');
+
+    this.City = this.commonService.getOrCreateModel(this.citySchema, 'City');
   }
 
-  async addcity(cityFields: CreateCityDto) {
+  /**
+   * Adds a new city to the database.
+   * @param cityFields - The fields of the city to be added.
+   * @returns The ID of the newly added city.
+   * @throws Throws an error if there is an issue adding the city.
+   */
+  async addCity(cityFields: CreateCityDto) {
     try {
       const cityId = shortid.generate();
       const city = new this.City({
@@ -28,15 +42,21 @@ class citiesDao {
     }
   }
 
-  async getcityById(cityId: string) {
+  /**
+   * Retrieves a city by its ID.
+   * @param cityId - The ID of the city to retrieve.
+   * @returns The city object if found, otherwise throws an error.
+   */
+  async getCityById(cityId: string) {
     try {
       const city = await this.City.findById(cityId).exec();
+
       if (!city)
         throw new AppError(
           true,
-          'getcityById_Error',
+          'RessourceNotFoundError',
           HttpStatusCode.NotFound,
-          'city not found'
+          'City not found!'
         );
       return city;
     } catch (error) {
@@ -44,69 +64,97 @@ class citiesDao {
     }
   }
 
-  async getcityes() {
+  /**
+   * Retrieves a list of cities.
+   * @returns {Promise<City[]>} A promise that resolves to an array of cities.
+   * @throws {AppError} If no cities are found.
+   */
+  async listCities() {
     try {
-      const cityes = await this.City.find().exec();
-      if (!cityes)
+      const cities = await this.City.find().exec();
+      if (!cities)
         throw new AppError(
           true,
-          'getcityes_Error',
+          'RessourceNotFoundError',
           HttpStatusCode.NotFound,
-          'No cityes found'
+          'No cities found'
         );
-      return cityes;
+      return cities;
     } catch (error) {
       throw error;
     }
   }
 
-  async updatecityById(cityId: string, cityFields: PatchcityDto) {
+  /**
+   * Updates a city by its ID.
+   * @param {string} cityId - The ID of the city to update.
+   * @param {PatchCityDto} cityFields - The fields to update in the city.
+   * @returns {Promise<string>} The ID of the updated city.
+   * @throws {AppError} If the city is not found.
+   */
+  async updateCityById(cityId: string, cityFields: PatchCityDto) {
     try {
-      const city = await this.City.findById(cityId).exec();
-      if (!city)
+      const updatedCity = await this.City.findByIdAndUpdate(
+        cityId,
+        { $set: cityFields },
+        { new: true }
+      ).exec();
+
+      if (!updatedCity)
         throw new AppError(
           true,
-          'updatecityById_Error',
+          'RessourceNotFoundError',
           HttpStatusCode.NotFound,
-          'city not found'
+          'City not found'
         );
-      city.set(cityFields);
-      await city.save();
+
       return cityId;
     } catch (error) {
       throw error;
     }
   }
 
-  async removecityById(cityId: string) {
+  /**
+   * Removes a city by its ID.
+   * @param {string} cityId - The ID of the city to be removed.
+   * @returns {Promise<void>} - A promise that resolves when the city is successfully removed.
+   * @throws {AppError} - If the city is not found.
+   */
+  async removeCityById(cityId: string) {
     try {
-      const city = await this.City.findById(cityId).exec();
-      if (!city)
+      const deletedCity = await this.City.deleteOne({ _id: cityId }).exec();
+      if (deletedCity.deletedCount === 0)
         throw new AppError(
           true,
-          'removecityById_Error',
+          'RessourceNotFoundError',
           HttpStatusCode.NotFound,
-          'city not found'
+          'City not found'
         );
-      await city.remove();
-      return cityId;
+
+      return;
     } catch (error) {
       throw error;
     }
   }
 
-  async getcityByName(name: string) {
+  /**
+   * Retrieves a city by its name.
+   * @param name - The name of the city.
+   * @returns The city object if found, otherwise throws an error.
+   */
+  async getCityByName(name: string) {
     try {
-      const CityName = this.City.findOne({ cityName: name }).exec();
-      if (!CityName)
+      const City = await this.City.findOne({ cityName: name }).exec();
+
+      if (!City)
         throw new AppError(
           true,
-          'getcityByName_Error',
+          'RessourceNotFoundError',
           HttpStatusCode.NotFound,
           'city not found'
         );
 
-      return CityName;
+      return City;
     } catch (error) {
       throw error;
     }
@@ -122,12 +170,22 @@ class citiesDao {
         unique: true,
         required: true,
       },
-      location: String,
+      location: {
+        type: {
+          type: String,
+          enum: ['Point'],
+          required: true,
+        },
+        coordinates: {
+          type: [Number],
+          required: true,
+        },
+      },
     },
     { id: false, timestamps: true }
   );
 
-  City = mongooseService.getMongoose().model('City', this.citySchema);
+  City = this.commonService.getOrCreateModel(this.citySchema, 'City');
 }
 
-export default new citiesDao();
+export { CitiesDao };

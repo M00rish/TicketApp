@@ -16,7 +16,7 @@ import { ReviewsRoutes } from './reviews/reviews.routes.config';
 import { BusesRoutes } from './buses/buses.routes.config';
 import { CitiesRoutes } from './cities/cities.routes.config';
 import { ticketsRoute } from './tickets/tickets.routes.config';
-import ErrorHandler from './common/middleware/error.handler.middleware';
+import ErrorHandler from './common/middlewares/error.handler.middleware';
 
 const app: express.Application = express();
 const server: http.Server = http.createServer(app);

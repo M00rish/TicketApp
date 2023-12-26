@@ -2,12 +2,17 @@ import { Schema } from 'mongoose';
 import mongooseService, { MongooseService } from '../service/mongoose.service';
 
 import debug from 'debug';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:common-service');
 
+@injectable()
 class CommonService {
-  constructor(private mongooseService: MongooseService) {
-    log('created new instance of CommonService');
+  constructor(
+    @inject(TYPES.MongooseService) private mongooseService: MongooseService
+  ) {
+    log('Created new instance of CommonService');
   }
 
   /**
@@ -19,13 +24,12 @@ class CommonService {
   public getOrCreateModel(schema: Schema, modelName: string) {
     let model;
     try {
-      model = this.mongooseService.getMongoose().model(modelName); // This will throw an error if the model doesn't exist
+      model = this.mongooseService.getMongoose().model(modelName);
     } catch (error) {
-      model = this.mongooseService.getMongoose().model(modelName, schema); // This will create the model
+      model = this.mongooseService.getMongoose().model(modelName, schema);
     }
     return model;
   }
 }
 
-export default new CommonService(mongooseService);
 export { CommonService };

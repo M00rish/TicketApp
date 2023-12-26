@@ -2,20 +2,31 @@ import debug from 'debug';
 
 import mongooseService from '../../common/service/mongoose.service';
 import shortid from 'shortid';
-import tripsDao from '../../trips/daos/trips.dao';
-import usersDao from '../../users/daos/users.dao';
+import { TripsDao } from '../../trips/daos/trips.dao';
+import { UsersDao } from '../../users/daos/users.dao';
 import { CreateReviewDto } from '../dtos/create.review.dto';
 import { PatchReviewDto } from '../dtos/patch.review.dto';
+import { CommonService } from '../../common/service/common.service';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
-import CommonService from '../../common/service/common.service';
 
 const log: debug.IDebugger = debug('app:reviews-dao');
 
+// TODO : inject mongooseService in all DAOs
+@injectable()
 class ReviewsDao {
-  constructor() {
-    log('created new instance of ReviewsDao');
-    this.Review = CommonService.getOrCreateModel(this.reviewSchema, 'Review');
+  constructor(
+    @inject(TYPES.TripsDao) private tripsDao: TripsDao,
+    @inject(TYPES.CommonService) private commonService: CommonService,
+    @inject(TYPES.UsersDao) private usersDao: UsersDao
+  ) {
+    log('Created new instance of ReviewsDao');
+    this.Review = this.commonService.getOrCreateModel(
+      this.reviewSchema,
+      'Review'
+    );
   }
 
   async addReview(reviewFields: CreateReviewDto) {
@@ -191,10 +202,11 @@ class ReviewsDao {
     }
   }
 
+  // TODO: move to trips
   async updateTripRating(tripId: string) {
     const reviews = await this.Review.find({ tripId: tripId }).exec();
     if (reviews.length === 0) {
-      await tripsDao.Trip.findOneAndUpdate(
+      await this.tripsDao.Trip.findOneAndUpdate(
         { _id: tripId },
         { $set: { ratings: 0 } },
         { new: true }
@@ -204,7 +216,7 @@ class ReviewsDao {
     const ratingSum = reviews.reduce((acc, review) => acc + review.ratings, 0);
     const ratingAvg = (ratingSum / reviews.length).toFixed(1);
 
-    await tripsDao.Trip.findOneAndUpdate(
+    await this.tripsDao.Trip.findOneAndUpdate(
       { _id: tripId },
       { $set: { ratings: ratingAvg } },
       { new: true }
@@ -217,12 +229,12 @@ class ReviewsDao {
       _id: { type: this.schema.Types.String },
       tripId: {
         type: this.schema.Types.String,
-        ref: tripsDao.Trip,
+        ref: this.tripsDao.Trip,
         required: true,
       },
       userId: {
         type: this.schema.Types.String,
-        ref: usersDao.User,
+        ref: this.usersDao.User,
         required: true,
       },
       reviewText: { type: String, required: true },
@@ -248,8 +260,7 @@ class ReviewsDao {
     next();
   });
 
-  Review = CommonService.getOrCreateModel(this.reviewSchema, 'Review');
+  Review = this.commonService.getOrCreateModel(this.reviewSchema, 'Review');
 }
 
-export default new ReviewsDao();
 export { ReviewsDao };

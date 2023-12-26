@@ -1,19 +1,22 @@
 import express from 'express';
 import debug from 'debug';
 import bcrypt from 'bcryptjs';
+import { inject, injectable } from 'inversify';
 
-import usersService, { UsersService } from '../../users/services/users.service';
+import { UsersService } from '../../users/services/users.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:Auth-Middlware');
 
+@injectable()
 class AuthMiddlware {
   /**
    * Creates a new instance of AuthMiddleware.
    * @param usersService The UsersService instance.
    */
-  constructor(private usersService: UsersService) {
+  constructor(@inject(TYPES.UsersService) private usersService: UsersService) {
     log('Created new instance of AuthMiddlware');
 
     this.verifyUserPassword = this.verifyUserPassword.bind(this);
@@ -59,5 +62,4 @@ class AuthMiddlware {
   }
 }
 
-export default new AuthMiddlware(usersService);
 export { AuthMiddlware };

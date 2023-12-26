@@ -1,158 +1,131 @@
 import debug from 'debug';
 import express from 'express';
 
-import citiesService from '../services/cities.service';
+import { CitiesService } from '../services/cities.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
-const log: debug.IDebugger = debug('app:city-controller');
+const log: debug.IDebugger = debug('app:City-controller');
 
-class cityController {
-  async listcities(
+@injectable()
+class CitiesController {
+  constructor(
+    @inject(TYPES.CitiesService) private CitiesService: CitiesService
+  ) {
+    log('Created new instance of CitiesController');
+
+    this.listCities = this.listCities.bind(this);
+    this.getCityById = this.getCityById.bind(this);
+    this.addCity = this.addCity.bind(this);
+    this.updateCity = this.updateCity.bind(this);
+    this.deleteCity = this.deleteCity.bind(this);
+  }
+
+  /**
+   * Retrieves a list of Cities.
+   *
+   * @param req - The express request object.
+   * @param res - The express response object.
+   * @param next - The express next function.
+   */
+  async listCities(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
     try {
-      const cities = await citiesService.list(100, 0);
-      res.status(HttpStatusCode.Ok).json(cities);
+      const Cities = await this.CitiesService.list(100, 0);
+      res.status(HttpStatusCode.Ok).json(Cities);
     } catch (error: any) {
-      if (error instanceof AppError) {
-        error = new AppError(
-          false,
-          'listcities_Error',
-          HttpStatusCode.BadRequest,
-          error.message
-        );
-        next(error);
-      } else {
-        res
-          .status(HttpStatusCode.InternalServerError)
-          .json('Internal Server Error');
-      }
+      next(error);
     }
   }
 
-  async getcityById(
+  /**
+   * Retrieves a City by its ID.
+   *
+   * @param req - The express request object.
+   * @param res - The express response object.
+   * @param next - The express next function.
+   */
+  async getCityById(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
-    const cityId = req.params.cityId;
+    const CityId = req.params.cityId;
+
     try {
-      const city = await citiesService.getById(cityId);
-      if (!city) {
-        const error = new AppError(
-          false,
-          'getcityById_Error',
-          HttpStatusCode.NotFound,
-          'city not found'
-        );
-        return next(error);
-      }
-      res.status(HttpStatusCode.Ok).json(city);
+      const City = await this.CitiesService.getById(CityId);
+      res.status(HttpStatusCode.Ok).json(City);
     } catch (error: any) {
-      if (error instanceof AppError) {
-        error = new AppError(
-          false,
-          'getcityById_Error',
-          HttpStatusCode.BadRequest,
-          error.message
-        );
-        next(error);
-      } else {
-        res
-          .status(HttpStatusCode.InternalServerError)
-          .json('Internal Server Error');
-      }
+      next(error);
     }
   }
 
-  async addcity(
+  /**
+   * Adds a new City.
+   *
+   * @param req - The express request object.
+   * @param res - The express response object.
+   * @param next - The express next function.
+   */
+  async addCity(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
     try {
-      const cityId = await citiesService.create(req.body);
-      res.status(HttpStatusCode.Created).json({ _id: cityId });
+      const CityId = await this.CitiesService.create(req.body);
+      res.status(HttpStatusCode.Created).json({ _id: CityId });
     } catch (error: any) {
-      if (error instanceof AppError) {
-        error = new AppError(
-          false,
-          'createcity_Error',
-          HttpStatusCode.BadRequest,
-          error.message
-        );
-        next(error);
-      } else {
-        res
-          .status(HttpStatusCode.InternalServerError)
-          .json('Internal Server Error');
-      }
+      next(error);
     }
   }
 
-  async updatecity(
+  /**
+   * Updates a City by its ID.
+   *
+   * @param req - The express request object.
+   * @param res - The express response object.
+   * @param next - The express next function.
+   */
+  async updateCity(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
-    const cityId = req.params.cityId;
+    const CityId = req.params.cityId;
     try {
-      const city = await citiesService.updateById(cityId, req.body);
-      if (!city) {
-        const error = new AppError(
-          false,
-          'updatecity_Error',
-          HttpStatusCode.NotFound,
-          'city not found'
-        );
-        return next(error);
-      }
-      res.status(HttpStatusCode.Ok).json({ _id: city });
+      const City = await this.CitiesService.updateById(CityId, req.body);
+      res.status(HttpStatusCode.Ok).json({ _id: City });
     } catch (error: any) {
-      if (error instanceof AppError) {
-        error = new AppError(
-          false,
-          'updatecity_Error',
-          HttpStatusCode.BadRequest,
-          error.message
-        );
-        next(error);
-      } else {
-        res
-          .status(HttpStatusCode.InternalServerError)
-          .json('Internal Server Error');
-      }
+      next(error);
     }
   }
 
-  async deletecity(
+  /**
+   * Deletes a city by its ID.
+   *
+   * @param req - The express request object.
+   * @param res - The express response object.
+   * @param next - The express next function.
+   */
+  async deleteCity(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
-    const cityId = req.params.cityId;
+    const CityId = req.params.cityId;
     try {
-      await citiesService.deleteById(cityId);
+      await this.CitiesService.deleteById(CityId);
       res.status(HttpStatusCode.NoContent).json();
     } catch (error: any) {
-      if (error instanceof AppError) {
-        error = new AppError(
-          false,
-          'deletecity_Error',
-          HttpStatusCode.BadRequest,
-          error.message
-        );
-        next(error);
-      } else {
-        res
-          .status(HttpStatusCode.InternalServerError)
-          .json('Internal Server Error');
-      }
+      next(error);
     }
   }
 }
 
-export default new cityController();
+export { CitiesController };

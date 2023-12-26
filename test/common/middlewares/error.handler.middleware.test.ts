@@ -2,7 +2,7 @@ import 'mocha';
 import sinon from 'sinon';
 import express from 'express';
 
-import { ErrorHandler } from '../../../src/common/middleware/error.handler.middleware';
+import { ErrorHandler } from '../../../src/common/middlewares/error.handler.middleware';
 import AppError from '../../../src/common/types/appError';
 import { expect } from 'chai';
 import HttpStatusCode from '../../../src/common/enums/HttpStatusCode.enum';

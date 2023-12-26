@@ -1,7 +1,21 @@
-import ticketsService from '../services/tickets.service';
 import express from 'express';
+import debug from 'debug';
 
+import { container } from '../../ioc/inversify.config';
+import { TicketsService } from '../services/tickets.service';
+import { injectable, inject } from 'inversify';
+import { TYPES } from '../../ioc/types';
+
+const log: debug.IDebugger = debug('app:tickets-controller');
+
+@injectable()
 class TicketsController {
+  constructor(
+    @inject(TYPES.TicketsService) private ticketsService: TicketsService
+  ) {
+    log('Created new instance of TicketsController');
+  }
+
   async createTicket(
     req: express.Request,
     res: express.Response,
@@ -16,7 +30,7 @@ class TicketsController {
         userId,
         seatNumber,
       };
-      const ticketId = await ticketsService.create(ressource);
+      const ticketId = await this.ticketsService.create(ressource);
       res.status(201).json({ _id: ticketId });
     } catch (error) {
       next(error);
@@ -30,7 +44,7 @@ class TicketsController {
   ) {
     try {
       const ticketId = req.params.ticketId;
-      const ticket = await ticketsService.getById(ticketId);
+      const ticket = await this.ticketsService.getById(ticketId);
       res.status(200).json({ ticket });
     } catch (error) {
       next(error);
@@ -43,7 +57,7 @@ class TicketsController {
     next: express.NextFunction
   ) {
     try {
-      const tickets = await ticketsService.list(10, 0);
+      const tickets = await this.ticketsService.list(10, 0);
       res.status(200).json({ tickets });
     } catch (error) {
       next(error);
@@ -58,7 +72,10 @@ class TicketsController {
     try {
       const ticketId = req.params.ticketId;
       const ticketUpdate = req.body;
-      const ticket = await ticketsService.updateById(ticketId, ticketUpdate);
+      const ticket = await this.ticketsService.updateById(
+        ticketId,
+        ticketUpdate
+      );
       res.status(200).json({ ticket });
     } catch (error) {
       next(error);
@@ -72,7 +89,7 @@ class TicketsController {
   ) {
     try {
       const ticketId = req.params.ticketId;
-      await ticketsService.deleteById(ticketId);
+      await this.ticketsService.deleteById(ticketId);
       res.status(204).json();
     } catch (error) {
       next(error);
@@ -85,7 +102,7 @@ class TicketsController {
     next: express.NextFunction
   ) {
     try {
-      await ticketsService.deleteAllTickets();
+      await this.ticketsService.deleteAllTickets();
       res.status(204).json();
     } catch (error) {
       next(error);
@@ -93,4 +110,4 @@ class TicketsController {
   }
 }
 
-export default new TicketsController();
+export { TicketsController };

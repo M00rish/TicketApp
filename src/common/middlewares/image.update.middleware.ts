@@ -4,9 +4,11 @@ import HttpStatusCode from '../enums/HttpStatusCode.enum';
 import path from 'path';
 import AppError from '../types/appError';
 import debug from 'debug';
+import { injectable } from 'inversify';
 
 const log: debug.IDebugger = debug('app:image-update-middleware');
 
+@injectable()
 class imageUpdateMiddleware {
   updateImage =
     (ressource: string) =>
@@ -68,5 +70,4 @@ class imageUpdateMiddleware {
     };
 }
 
-export default new imageUpdateMiddleware();
 export { imageUpdateMiddleware };

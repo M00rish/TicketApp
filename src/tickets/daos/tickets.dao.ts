@@ -1,18 +1,36 @@
 import debug from 'debug';
 import shortid from 'shortid';
 
+import { injectable, inject } from 'inversify';
 import mongooseService from '../../common/service/mongoose.service';
 import AppError from '../../common/types/appError';
-import usersDao from '../../users/daos/users.dao';
-import tripsDao from '../../trips/daos/trips.dao';
-import busesDao from '../../buses/daos/buses.dao';
+import { UsersDao } from '../../users/daos/users.dao';
+import { TripsDao } from '../../trips/daos/trips.dao';
+import { BusesDao } from '../../buses/daos/buses.dao';
 import { PatchTicketDto } from '../dtos/patch.ticket.dto';
 import { CreateTicketDto } from '../dtos/create.ticket.dto';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
+import { CommonService } from '../../common/service/common.service';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:trips-dao');
 
+@injectable()
 class TicketsDao {
+  constructor(
+    @inject(TYPES.CommonService) private commonService: CommonService,
+    @inject(TYPES.UsersDao) private usersDao: UsersDao,
+    @inject(TYPES.TripsDao) private tripsDao: TripsDao,
+    @inject(TYPES.BusesDao) private busesDao: BusesDao
+  ) {
+    log('Created new instance of TicketsDao');
+
+    this.Ticket = this.commonService.getOrCreateModel(
+      this.ticketSchema,
+      'Ticket'
+    );
+  }
+
   async createTicket(seatNumber: number, tripId: string, userId: string) {
     try {
       if (!seatNumber || !tripId || !userId) {
@@ -25,8 +43,8 @@ class TicketsDao {
       }
 
       const [user, trip] = await Promise.all([
-        usersDao.getUserById(userId),
-        tripsDao.getTripById(tripId),
+        this.usersDao.getUserById(userId),
+        this.tripsDao.getById(tripId),
       ]);
 
       if (!user || !trip) {
@@ -64,7 +82,7 @@ class TicketsDao {
       });
 
       await ticket.save();
-      await tripsDao.updateBookedSeats(tripId, seatNumber);
+      await this.tripsDao.updateBookedSeats(tripId, seatNumber);
 
       return ticketId;
     } catch (error) {
@@ -152,7 +170,7 @@ class TicketsDao {
       await this.Ticket.deleteOne({
         _id: ticketId,
       }).exec();
-      await tripsDao.removeBookedSeat(ticket.tripId, ticket.seatNumber);
+      await this.tripsDao.removeBookedSeat(ticket.tripId, ticket.seatNumber);
     } catch (error) {
       throw error;
     }
@@ -169,14 +187,14 @@ class TicketsDao {
   async deleteAllTickets() {
     try {
       await this.Ticket.deleteMany({}).exec();
-      tripsDao.resetBookedSeatsForAllTrips();
+      this.tripsDao.resetBookedSeatsForAllTrips();
     } catch (error) {
       throw error;
     }
   }
 
   async validateSeatNumber(seatNumber: number, trip) {
-    const bus = await busesDao.getBusById(trip.busId);
+    const bus = await this.busesDao.getBusById(trip.busId);
     if (seatNumber > bus.seats || seatNumber < 1) {
       throw new AppError(
         true,
@@ -246,8 +264,7 @@ class TicketsDao {
     next();
   });
 
-  Ticket = mongooseService.getMongoose().model('Ticket', this.ticketSchema);
+  Ticket = this.commonService.getOrCreateModel(this.ticketSchema, 'Ticket');
 }
 
-export default new TicketsDao();
 export { TicketsDao };

@@ -3,17 +3,20 @@ import shortid from 'shortid';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import AppError from '../../common/types/appError';
 import mongooseService from '../../common/service/mongoose.service';
-import commonService, {
-  CommonService,
-} from '../../common/service/common.service';
+import { CommonService } from '../../common/service/common.service';
 import { CreateBusDto } from '../dtos/create.bus.dto';
 import { PatchBusDto } from '../dtos/patch.bus.dto';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:buses-dao');
 
+@injectable()
 class BusesDao {
-  constructor(private commonService: CommonService) {
-    log('created new instance of BusesDao');
+  constructor(
+    @inject(TYPES.CommonService) private commonService: CommonService
+  ) {
+    log('Created new instance of BusesDao');
   }
 
   /**
@@ -49,7 +52,7 @@ class BusesDao {
       if (!bus)
         throw new AppError(
           true,
-          'getBusById_Error',
+          'RessourceNotFoundError',
           HttpStatusCode.NotFound,
           'Bus not found'
         );
@@ -87,7 +90,7 @@ class BusesDao {
       if (!bus)
         throw new AppError(
           true,
-          'updateBusById_Error',
+          'RessourceNotFoundError',
           HttpStatusCode.NotFound,
           'Bus not found'
         );
@@ -111,7 +114,7 @@ class BusesDao {
       if (!bus)
         throw new AppError(
           true,
-          'removeBusById_Error',
+          'RessourceNotFoundError',
           HttpStatusCode.NotFound,
           'Bus not found'
         );
@@ -121,6 +124,16 @@ class BusesDao {
       throw error;
     }
   }
+
+  /**
+   * Checks if a bus with the given ID exists.
+   * @param {string} BusId - The ID of the bus to validate.
+   * @returns {Promise<boolean>} - A promise that resolves to true if the bus exists, false otherwise.
+   */
+  validateBusExists = async (BusId: string) => {
+    const busExists = await this.Bus.exists({ _id: BusId });
+    return busExists;
+  };
 
   schema = mongooseService.getMongoose().Schema;
 
@@ -146,5 +159,4 @@ class BusesDao {
   Bus = this.commonService.getOrCreateModel(this.busSchema, 'Bus');
 }
 
-export default new BusesDao(commonService);
 export { BusesDao };

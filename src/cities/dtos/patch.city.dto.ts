@@ -1,3 +1,3 @@
 import { CreateCityDto } from './create.city.dto';
 
-export interface PatchcityDto extends Partial<CreateCityDto> {}
+export interface PatchCityDto extends Partial<CreateCityDto> {}

@@ -5,7 +5,7 @@ import httpMocks from 'node-mocks-http';
 import sinonMongoose from 'sinon-mongoose';
 
 import { ReviewsDao } from '../../../src/reviews/daos/reviews.dao';
-import { PermissionMiddleware } from '../../../src/common/middleware/common.permission.middleware';
+import { PermissionMiddleware } from '../../../src/common/middlewares/common.permission.middleware';
 import AppError from '../../../src/common/types/appError';
 import HttpStatusCode from '../../../src/common/enums/HttpStatusCode.enum';
 import { permissionsFlags } from '../../../src/common/enums/common.permissionflag.enum';

@@ -1,35 +1,92 @@
 import express from 'express';
+import { body } from 'express-validator';
+import { container } from '../ioc/inversify.config';
 
 import { CommonRoutesConfig } from '../common/common.routes.config';
-import jwtMiddleware from '../auth/middleware/jwt.middleware';
-import PermissionMiddleware from '../common/middleware/common.permission.middleware';
+import { JwtMiddleware } from '../auth/middleware/jwt.middleware';
+import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
+import { PermissionMiddleware } from '../common/middlewares/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
-import tripsController from './controllers/trips.controller';
-import { body } from 'express-validator';
-import bodyValidationMiddleware from '../common/middleware/body.validation.middleware';
+import { TripsController } from './controllers/trips.controller';
 
 export class TripsRoutes extends CommonRoutesConfig {
+  private tripsController;
+  private jwtMiddleware;
+  private permissionMiddleware;
+  private bodyValidationMiddleware;
+
   constructor(app: express.Application) {
     super(app, 'TripsRoutes');
+
+    this.tripsController = container.resolve(TripsController);
+    this.jwtMiddleware = container.resolve(JwtMiddleware);
+    this.permissionMiddleware = container.resolve(PermissionMiddleware);
+    this.bodyValidationMiddleware = container.resolve(BodyValidationMiddleware);
   }
 
   configureRoutes(): express.Application {
     this.app
       .route(`/v1/trips`)
-      .all(jwtMiddleware.checkValidToken)
-      .get([
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.USER),
-        tripsController.listTrips,
-      ])
-      .post([
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
-        body('departureCity').isString(),
-        body('arrivalCity').isString(),
-        body('departureTime').isString(),
-        body('arrivalTime').isString(),
-        body('price').isNumeric(),
-        body('busId').isString(),
-        bodyValidationMiddleware.verifyBodyFieldsError([
+      .all(this.jwtMiddleware.checkValidToken)
+      .get(
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.USER
+        ),
+        this.tripsController.listTrips
+      )
+      .post(
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        ),
+        body('departureCity')
+          .exists()
+          .withMessage('departureCity is required')
+          .trim()
+          .escape()
+          .matches(/^[A-Za-z]+$/)
+          .withMessage('departureCity must only contain letters'),
+        body('arrivalCity')
+          .exists()
+          .withMessage('arrivalCity is required')
+          .trim()
+          .escape()
+          .matches(/^[A-Za-z]+$/)
+          .withMessage('arrivalCity must only contain letters'),
+        body('departureTime')
+          .exists()
+          .withMessage('departureTime is required')
+          .trim()
+          .escape()
+          .matches(
+            /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$/
+          )
+          .withMessage(
+            'departureTime must be in format YYYY-MM-DDTHH:mm:ss.SSSZ'
+          ),
+        body('arrivalTime')
+          .exists()
+          .withMessage('arrivalTime is required')
+          .trim()
+          .escape()
+          .matches(
+            /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$/
+          )
+          .withMessage(
+            'arrivalTime must be in format YYYY-MM-DDTHH:mm:ss.SSSZ'
+          ),
+        body('price')
+          .exists()
+          .withMessage('price is required')
+          .trim()
+          .escape()
+          .matches(/^[0-9]+$/)
+          .withMessage('price must only contain numbers'),
+        body('busId')
+          .exists()
+          .withMessage('busId is required')
+          .matches(/^[A-Za-z0-9]+$/)
+          .withMessage('busId must only contain numbers and letters'),
+        this.bodyValidationMiddleware.verifyBodyFieldsError([
           'departureCity',
           'arrivalCity',
           'departureTime',
@@ -37,32 +94,70 @@ export class TripsRoutes extends CommonRoutesConfig {
           'price',
           'busId',
         ]),
-        tripsController.createTrip,
-      ])
-      .delete([
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
-        tripsController.deleteAllTrips,
-      ]);
+        this.tripsController.createTrip
+      );
+    // .delete(
+    //   this.permissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
+    //   this.tripsController.deleteAllTrips
+    // );
 
     this.app
       .route(`/v1/trips/:tripId`)
-      .all([jwtMiddleware.checkValidToken])
-      .get(tripsController.getTripById)
-      .delete([
-        PermissionMiddleware.permissionsFlagsRequired(permissionsFlags.ADMIN),
-        tripsController.deleteTripById,
-      ])
-      .patch([
-        PermissionMiddleware.permissionsFlagsRequired(
+      .all(this.jwtMiddleware.checkValidToken)
+      .get(this.tripsController.getTripById)
+      .delete(
+        this.permissionMiddleware.permissionsFlagsRequired(
+          permissionsFlags.ADMIN
+        ),
+        this.tripsController.deleteTripById
+      )
+      .patch(
+        this.permissionMiddleware.permissionsFlagsRequired(
           permissionsFlags.TRIP_GUIDE
         ),
-        body('departureCity').isString().optional(),
-        body('arrivalCity').isString().optional(),
-        body('departureTime').isString().optional(),
-        body('arrivalTime').isString().optional(),
-        body('price').isNumeric().optional(),
-        body('busId').isString().optional(),
-        bodyValidationMiddleware.verifyBodyFieldsError([
+        body('departureCity')
+          .optional()
+          .trim()
+          .escape()
+          .matches(/^[A-Za-z]+$/)
+          .withMessage('departureCity must only contain letters'),
+        body('arrivalCity')
+          .optional()
+          .trim()
+          .escape()
+          .matches(/^[A-Za-z]+$/)
+          .withMessage('arrivalCity must only contain letters'),
+        body('departureTime')
+          .optional()
+          .trim()
+          .escape()
+          .matches(
+            /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$/
+          )
+          .withMessage(
+            'arrivalTime must be in format YYYY-MM-DDTHH:mm:ss.SSSZ'
+          ),
+        body('arrivalTime')
+          .optional()
+          .trim()
+          .escape()
+          .matches(
+            /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$/
+          )
+          .withMessage(
+            'arrivalTime must be in format YYYY-MM-DDTHH:mm:ss.SSSZ'
+          ),
+        body('price')
+          .optional()
+          .trim()
+          .escape()
+          .matches(/^[0-9]+$/)
+          .withMessage('price must only contain numbers'),
+        body('busId')
+          .optional()
+          .matches(/^[A-Za-z0-9]+$/)
+          .withMessage('busId must only contain numbers and letters'),
+        this.bodyValidationMiddleware.verifyBodyFieldsError([
           'departureCity',
           'arrivalCity',
           'departureTime',
@@ -70,8 +165,8 @@ export class TripsRoutes extends CommonRoutesConfig {
           'price',
           'busId',
         ]),
-        tripsController.patchTripById,
-      ]);
+        this.tripsController.patchTripById
+      );
 
     this.app.post(`/v1/trips/search`, []); // TODO
 

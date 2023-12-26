@@ -4,9 +4,11 @@ import debug from 'debug';
 
 import HttpStatusCode from '../enums/HttpStatusCode.enum';
 import AppError from '../types/appError';
+import { injectable } from 'inversify';
 
 const log: debug.IDebugger = debug('app:bodyValidationMiddleware');
 
+@injectable()
 class BodyValidationMiddleware {
   /**
    * Middleware function to verify the presence of required fields in the request body.
@@ -81,7 +83,23 @@ class BodyValidationMiddleware {
       return error;
     });
   };
+
+  /**
+   * Validates the coordinates.
+   * @param value - The coordinates value to be validated.
+   * @returns True if the coordinates are valid, false otherwise.
+   */
+  public validateCoordiantes = (value) => {
+    const [longitude, latitude] = value;
+    return (
+      typeof longitude === 'number' &&
+      typeof latitude === 'number' &&
+      longitude >= -180 &&
+      longitude <= 180 &&
+      latitude >= -90 &&
+      latitude <= 90
+    );
+  };
 }
 
-export default new BodyValidationMiddleware();
 export { BodyValidationMiddleware };

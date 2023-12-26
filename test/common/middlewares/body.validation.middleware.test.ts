@@ -6,7 +6,7 @@ import * as validation from 'express-validator';
 import { validationResult, Location } from 'express-validator';
 
 import AppError from '../../../src/common/types/appError';
-import { BodyValidationMiddleware } from '../../../src/common/middleware/body.validation.middleware';
+import { BodyValidationMiddleware } from '../../../src/common/middlewares/body.validation.middleware';
 
 describe('BodyValidationMiddleware', () => {
   let bodyValidationMiddleware: BodyValidationMiddleware;
@@ -163,6 +163,57 @@ describe('BodyValidationMiddleware', () => {
       );
 
       expect(result).to.be.an('array').that.is.empty;
+    });
+  });
+
+  describe('validateCoordinates', () => {
+    it('should return true for valid coordinates', () => {
+      const validCoordinates = [45, 90];
+      const result =
+        bodyValidationMiddleware.validateCoordiantes(validCoordinates);
+      expect(result).to.be.true;
+    });
+
+    it('should return false for longitude less than -180', () => {
+      const invalidCoordinates = [-181, 45];
+      const result =
+        bodyValidationMiddleware.validateCoordiantes(invalidCoordinates);
+      expect(result).to.be.false;
+    });
+
+    it('should return false for longitude greater than 180', () => {
+      const invalidCoordinates = [181, 45];
+      const result =
+        bodyValidationMiddleware.validateCoordiantes(invalidCoordinates);
+      expect(result).to.be.false;
+    });
+
+    it('should return false for latitude less than -90', () => {
+      const invalidCoordinates = [45, -91];
+      const result =
+        bodyValidationMiddleware.validateCoordiantes(invalidCoordinates);
+      expect(result).to.be.false;
+    });
+
+    it('should return false for latitude greater than 90', () => {
+      const invalidCoordinates = [45, 91];
+      const result =
+        bodyValidationMiddleware.validateCoordiantes(invalidCoordinates);
+      expect(result).to.be.false;
+    });
+
+    it('should return false for non-numeric longitude', () => {
+      const invalidCoordinates = ['invalid', 45];
+      const result =
+        bodyValidationMiddleware.validateCoordiantes(invalidCoordinates);
+      expect(result).to.be.false;
+    });
+
+    it('should return false for non-numeric latitude', () => {
+      const invalidCoordinates = [45, 'invalid'];
+      const result =
+        bodyValidationMiddleware.validateCoordiantes(invalidCoordinates);
+      expect(result).to.be.false;
     });
   });
 });

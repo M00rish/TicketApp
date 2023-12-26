@@ -1,15 +1,27 @@
 import express from 'express';
 import { body } from 'express-validator';
 
+import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
+import { container } from '../ioc/inversify.config';
 import { CommonRoutesConfig } from '../common/common.routes.config';
-import authController from './controllers/auth.controller';
-import authMiddleware from './middleware/auth.middleware';
-import bodyValidationMiddleware from '../common/middleware/body.validation.middleware';
-import jwtMiddleware from './middleware/jwt.middleware';
+import { TYPES } from '../ioc/types';
+import { AuthMiddlware } from './middleware/auth.middleware';
+import { AuthController } from './controllers/auth.controller';
+import { JwtMiddleware } from './middleware/jwt.middleware';
 
 export class AuthRoutes extends CommonRoutesConfig {
+  private authMiddleware;
+  private authController;
+  private jwtMiddleware;
+  private bodyValidationMiddleware;
+
   constructor(app: express.Application) {
     super(app, 'AuthRoutes');
+
+    this.authMiddleware = container.resolve(AuthMiddlware);
+    this.authController = container.resolve(AuthController);
+    this.jwtMiddleware = container.resolve(JwtMiddleware);
+    this.bodyValidationMiddleware = container.resolve(BodyValidationMiddleware);
   }
 
   configureRoutes(): express.Application {
@@ -18,22 +30,25 @@ export class AuthRoutes extends CommonRoutesConfig {
       body('password')
         .isLength({ min: 5 })
         .withMessage('Must include password (5+ characters)'),
-      bodyValidationMiddleware.verifyBodyFieldsError(['email', 'password']),
-      authMiddleware.verifyUserPassword,
-      authController.logIn,
+      this.bodyValidationMiddleware.verifyBodyFieldsError([
+        'email',
+        'password',
+      ]),
+      this.authMiddleware.verifyUserPassword,
+      this.authController.logIn,
     ]);
 
     this.app.get('/v1/logout', [
-      jwtMiddleware.checkValidToken,
-      authController.logOut,
+      this.jwtMiddleware.checkValidToken,
+      this.authController.logOut,
     ]);
 
     this.app.post('/v1/refresh-token', [
-      // jwtMiddleware.rateLimitRefreshTokenRequests,
-      jwtMiddleware.checkValidToken,
-      jwtMiddleware.checkValidRefreshToken,
-      jwtMiddleware.prepareBody,
-      authController.logIn,
+      // this.jwtMiddleware.rateLimitRefreshTokenRequests,
+      this.jwtMiddleware.checkValidToken,
+      this.jwtMiddleware.checkValidRefreshToken,
+      this.jwtMiddleware.prepareBody,
+      this.authController.logIn,
     ]);
 
     return this.app;

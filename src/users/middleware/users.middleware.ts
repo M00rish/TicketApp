@@ -1,14 +1,17 @@
 import express from 'express';
 import debug from 'debug';
 
-import usersService, { UsersService } from '../services/users.service';
+import { injectable, inject } from 'inversify';
+import { UsersService } from '../services/users.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:Users-Middleware');
 
+@injectable()
 class UsersMiddleware {
-  constructor(usersService: UsersService) {
+  constructor(@inject(TYPES.UsersService) private usersService: UsersService) {
     log('Created new instance of UsersMiddleware');
   }
 
@@ -27,7 +30,7 @@ class UsersMiddleware {
     next: express.NextFunction
   ) {
     try {
-      const user = await usersService.getUserByEmail(req.body.email);
+      const user = await this.usersService.getUserByEmail(req.body.email);
 
       if (user.email)
         throw new AppError(
@@ -116,4 +119,4 @@ class UsersMiddleware {
   }
 }
 
-export default new UsersMiddleware(usersService);
+export { UsersMiddleware };

@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import mockery from 'mockery';
 import multer from 'multer';
 import { Readable } from 'stream';
-import { imageUpdateMiddleware } from '../../../src/common/middleware/image.update.middleware';
+import { imageUpdateMiddleware } from '../../../src/common/middlewares/image.update.middleware';
 
 describe('Image Update Middleware', () => {
   //   let imageupdatemiddleware: imageUpdateMiddleware;

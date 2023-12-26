@@ -2,16 +2,19 @@ import debug from 'debug';
 import { PatchUserDto } from '../dtos/patch.user.dto';
 import { CreateUserDto } from '../dtos/create.user.dto';
 import { CRUD } from '../../common/interfaces/crud.interface';
-import usersDao, { UsersDao } from '../daos/users.dao';
+import { UsersDao } from '../daos/users.dao';
+import { injectable, inject } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:Users-Service');
 
+@injectable()
 class UsersService implements CRUD {
   /**
    * Creates a new instance of the UsersService.
    * @param usersDao - The users data access object.
    */
-  constructor(private usersDao: UsersDao) {
+  constructor(@inject(TYPES.UsersDao) private usersDao: UsersDao) {
     log('Created new instance of UsersService');
   }
 
@@ -20,7 +23,7 @@ class UsersService implements CRUD {
    * @param resource The user data to create.
    * @returns The created user.
    */
-  async create(resource: CreateUserDto) {
+  public async create(resource: CreateUserDto) {
     return await this.usersDao.createUser(resource);
   }
 
@@ -29,7 +32,7 @@ class UsersService implements CRUD {
    * @param id - The ID of the user.
    * @returns A Promise that resolves to the user object.
    */
-  async getById(id: string) {
+  public async getById(id: string) {
     return await this.usersDao.getUserById(id);
   }
 
@@ -38,7 +41,7 @@ class UsersService implements CRUD {
    * @param id The ID of the user to delete.
    * @returns A promise that resolves when the user is deleted.
    */
-  async deleteById(id: string) {
+  public async deleteById(id: string) {
     return await this.usersDao.deleteUserById(id);
   }
 
@@ -48,7 +51,7 @@ class UsersService implements CRUD {
    * @param page The page number of the results.
    * @returns A promise that resolves to the list of users.
    */
-  async list(limit: number, page: number) {
+  public async list(limit: number, page: number) {
     return await this.usersDao.listUsers(limit, page);
   }
 
@@ -58,7 +61,7 @@ class UsersService implements CRUD {
    * @param resource - The updated user data.
    * @returns A Promise that resolves to the updated user.
    */
-  async updateById(id: string, resource: PatchUserDto) {
+  public async updateById(id: string, resource: PatchUserDto) {
     return await this.usersDao.updateUserById(id, resource);
   }
 
@@ -67,7 +70,7 @@ class UsersService implements CRUD {
    * @param email - The email address of the user.
    * @returns A Promise that resolves to the user object.
    */
-  async getUserByEmail(email: string) {
+  public async getUserByEmail(email: string) {
     return await this.usersDao.getUserByEmail(email);
   }
 
@@ -76,7 +79,7 @@ class UsersService implements CRUD {
    * @param email - The email of the user.
    * @returns A promise that resolves to the user with the specified email and password.
    */
-  async getUserByEmailWithPassword(email: string) {
+  public async getUserByEmailWithPassword(email: string) {
     return await this.usersDao.getUserByEmailWithPassword(email);
   }
 
@@ -85,7 +88,7 @@ class UsersService implements CRUD {
    * @param id - The ID of the user.
    * @param refreshToken - The new refresh token.
    */
-  async updateUserRefreshTokenById(id: string, refreshToken: string) {
+  public async updateUserRefreshTokenById(id: string, refreshToken: string) {
     return await this.usersDao.updateUserRefreshTokenById(id, refreshToken);
   }
 
@@ -93,10 +96,9 @@ class UsersService implements CRUD {
    * Deletes all users.
    * @returns {Promise<void>} A promise that resolves when all users are deleted.
    */
-  async deleteAllUsers() {
+  public async deleteAllUsers() {
     return await this.usersDao.deleteAllUsers();
   }
 }
 
-export default new UsersService(usersDao);
 export { UsersService };

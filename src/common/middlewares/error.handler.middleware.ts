@@ -2,7 +2,8 @@ import AppError from '../types/appError';
 
 import debug from 'debug';
 import express from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import { injectable } from 'inversify';
+import { generate } from 'shortid';
 
 const log: debug.IDebugger = debug('app:errorHandler');
 
@@ -89,7 +90,7 @@ class ErrorHandler {
 
     return res.status(err.statusCode || 500).json({
       error: {
-        id: uuidv4(),
+        id: generate(),
         status: err.statusCode || 500,
         name: error.name,
         message: error.message,

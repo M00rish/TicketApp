@@ -3,14 +3,17 @@ import { permissionsFlags } from '../enums/common.permissionflag.enum';
 import debug from 'debug';
 import AppError from '../types/appError';
 import HttpStatusCode from '../enums/HttpStatusCode.enum';
-import reviewsService, {
-  ReviewsService,
-} from '../../reviews/services/reviews.service';
+import { ReviewsService } from '../../reviews/services/reviews.service';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:common-permission-middleware');
 
+@injectable()
 class PermissionMiddleware {
-  constructor(private reviewsService: ReviewsService) {
+  constructor(
+    @inject(TYPES.ReviewsService) private reviewsService: ReviewsService
+  ) {
     log('Created instance of CommonPermissionMiddleware');
   }
 
@@ -116,5 +119,4 @@ class PermissionMiddleware {
   }
 }
 
-export default new PermissionMiddleware(reviewsService);
 export { PermissionMiddleware };
