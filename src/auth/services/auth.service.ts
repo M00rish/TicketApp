@@ -2,7 +2,7 @@ import express from 'express';
 import debug from 'debug';
 import Jwt from 'jsonwebtoken';
 
-import { UsersService } from '../../users/services/users.service';
+import usersService, { UsersService } from '../../users/services/users.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { inject, injectable } from 'inversify';
@@ -10,13 +10,12 @@ import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:auth-controller');
 
-@injectable()
 class AuthService {
   /**
    * Creates a new instance of the AuthService.
    * @param usersService The UsersService instance used for authentication.
    */
-  constructor(@inject(TYPES.UsersService) private usersService: UsersService) {
+  constructor(private usersService: UsersService) {
     log('Created new instance of AuthService');
   }
 
@@ -154,3 +153,4 @@ class AuthService {
 }
 
 export { AuthService };
+export default new AuthService(usersService);

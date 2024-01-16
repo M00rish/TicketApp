@@ -1,15 +1,14 @@
 import debug from 'debug';
 import { CRUD } from '../../common/interfaces/crud.interface';
-import { CitiesDao } from '../daos/cities.dao';
+import citiesDao, { CitiesDao } from '../daos/cities.dao';
 import { PatchCityDto } from '../dtos/patch.city.dto';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:cities-service');
 
-@injectable()
 class CitiesService implements CRUD {
-  constructor(@inject(TYPES.CitiesDao) private citiesDao: CitiesDao) {
+  constructor(private citiesDao: CitiesDao) {
     log('Created new instance of citiesService');
   }
 
@@ -72,3 +71,4 @@ class CitiesService implements CRUD {
 }
 
 export { CitiesService };
+export default new CitiesService(citiesDao);

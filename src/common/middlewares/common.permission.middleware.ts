@@ -9,11 +9,8 @@ import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:common-permission-middleware');
 
-@injectable()
 class PermissionMiddleware {
-  constructor(
-    @inject(TYPES.ReviewsService) private reviewsService: ReviewsService
-  ) {
+  constructor(private reviewsService: ReviewsService) {
     log('Created instance of CommonPermissionMiddleware');
   }
 
@@ -120,3 +117,4 @@ class PermissionMiddleware {
 }
 
 export { PermissionMiddleware };
+// export default new PermissionMiddleware(

@@ -4,19 +4,19 @@ import { container } from '../../ioc/inversify.config';
 import getDecorators from 'inversify-inject-decorators';
 
 import mongooseService from './mongoose.service';
-import { TripsService } from '../../trips/services/trips.service';
-import { TicketsService } from '../../tickets/services/tickets.service';
+import tripsService, { TripsService } from '../../trips/services/trips.service';
+import ticketsService, {
+  TicketsService,
+} from '../../tickets/services/tickets.service';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '../../ioc/types';
-
-const { lazyInject } = getDecorators(container);
 
 const log: debug.IDebugger = debug('app:scheduler-service');
 
 /**
  * Represents a scheduler service that manages the scheduling and updating of trip and ticket statuses.
  */
-@injectable()
+
 class SchedulerService {
   private ticketsService: TicketsService;
   private tripsService: TripsService;
@@ -27,11 +27,7 @@ class SchedulerService {
    * @param tripsService The trips service.
    * @param ticketsService The tickets service.
    */
-  constructor(
-    @inject(TYPES.TripsService) tripsService: TripsService,
-    @inject(TYPES.TicketsService)
-    ticketsService: TicketsService
-  ) {
+  constructor(tripsService: TripsService, ticketsService: TicketsService) {
     this.agenda = new Agenda({
       db: { address: mongooseService.DB_URI },
     });
@@ -143,3 +139,4 @@ class SchedulerService {
 }
 
 export { SchedulerService };
+export default new SchedulerService(tripsService, ticketsService);

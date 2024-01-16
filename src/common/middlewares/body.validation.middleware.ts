@@ -8,7 +8,6 @@ import { injectable } from 'inversify';
 
 const log: debug.IDebugger = debug('app:bodyValidationMiddleware');
 
-@injectable()
 class BodyValidationMiddleware {
   /**
    * Middleware function to verify the presence of required fields in the request body.
@@ -103,3 +102,4 @@ class BodyValidationMiddleware {
 }
 
 export { BodyValidationMiddleware };
+export default new BodyValidationMiddleware();

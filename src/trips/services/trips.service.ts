@@ -3,7 +3,7 @@ import getDecorators from 'inversify-inject-decorators';
 
 import { CRUD } from '../../common/interfaces/crud.interface';
 import { CreateTripDto } from '../dtos/create.trip.dto';
-import { TripsDao } from '../daos/trips.dao';
+import tripsDao, { TripsDao } from '../daos/trips.dao';
 import { PatchTripDto } from '../dtos/patch.trips.dto';
 import { injectable, inject, LazyServiceIdentifer } from 'inversify';
 import { TYPES } from '../../ioc/types';
@@ -11,20 +11,13 @@ import { container } from '../../ioc/inversify.config';
 
 const log: debug.IDebugger = debug('app:trips-service');
 
-const { lazyInject } = getDecorators(container);
-
-@injectable()
 class TripsService implements CRUD {
-  private tripsDao: TripsDao;
-
   /**
    * Creates a new instance of the TripsService class.
    * @param tripsDao - The trips data access object.
    */
   //@ts-ignore
-  constructor(
-    @inject(new LazyServiceIdentifer(() => TYPES.TripsDao)) tripsDao: TripsDao
-  ) {
+  constructor(private tripsDao: TripsDao) {
     this.tripsDao = tripsDao;
     log('Created new instance of TripsService');
   }
@@ -123,3 +116,4 @@ class TripsService implements CRUD {
 }
 
 export { TripsService };
+export default new TripsService(tripsDao);

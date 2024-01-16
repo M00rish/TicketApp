@@ -5,20 +5,19 @@ import AppError from '../../common/types/appError';
 import mongooseService from '../../common/service/mongoose.service';
 import { CreateCityDto } from '../dtos/create.city.dto';
 import { PatchCityDto } from '../dtos/patch.city.dto';
-import { CommonService } from '../../common/service/common.service';
+import commonService, {
+  CommonService,
+} from '../../common/service/common.service';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:city-dao');
 
-@injectable()
 class CitiesDao {
-  constructor(
-    @inject(TYPES.CommonService) private commonService: CommonService
-  ) {
+  constructor(private commonService: CommonService) {
     log('Created new instance of cityesDao');
 
-    this.City = this.commonService.getOrCreateModel(this.citySchema, 'City');
+    this.City = this.commonService.getOrCreateModel('City', this.citySchema);
   }
 
   /**
@@ -185,7 +184,8 @@ class CitiesDao {
     { id: false, timestamps: true }
   );
 
-  City = this.commonService.getOrCreateModel(this.citySchema, 'City');
+  City = this.commonService.getOrCreateModel('City', this.citySchema);
 }
 
 export { CitiesDao };
+export default new CitiesDao(commonService);

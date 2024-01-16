@@ -5,49 +5,37 @@ import { injectable, inject, LazyServiceIdentifier } from 'inversify';
 import getDecorators from 'inversify-inject-decorators';
 
 import mongooseService from '../../common/service/mongoose.service';
-import { CitiesDao } from '../../cities/daos/cities.dao';
-import { BusesDao } from '../../buses/daos/buses.dao';
+import citiesDao, { CitiesDao } from '../../cities/daos/cities.dao';
+import busesDao, { BusesDao } from '../../buses/daos/buses.dao';
+import ticketsService, {
+  TicketsService,
+} from '../../tickets/services/tickets.service';
+import schedulerService, {
+  SchedulerService,
+} from '../../common/service/scheduler.service';
+import busesService, { BusesService } from '../../buses/services/buses.service';
+import citiesService, {
+  CitiesService,
+} from '../../cities/services/cities.service';
+import commonService from '../../common/service/common.service';
 import { CreateTripDto } from '../dtos/create.trip.dto';
 import { PatchTripDto } from '../dtos/patch.trips.dto';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
-import { TicketsService } from '../../tickets/services/tickets.service';
-import { SchedulerService } from '../../common/service/scheduler.service';
-import { BusesService } from '../../buses/services/buses.service';
-import { CitiesService } from '../../cities/services/cities.service';
-import { CommonService } from '../../common/service/common.service';
 import { TYPES } from '../../ioc/types';
 import { container } from '../../ioc/inversify.config';
 
 const log: debug.IDebugger = debug('app:trips-dao');
 
-const { lazyInject } = getDecorators(container);
-
-@injectable()
 class TripsDao {
-  private schedulerService: SchedulerService;
-  private commonService!: CommonService;
-  private citiesService: CitiesService;
-  private ticketsService: TicketsService;
-  private citiesDao!: CitiesDao;
-  private busesDao!: BusesDao;
-  private busesService!: BusesService;
-
   constructor(
-    @inject(new LazyServiceIdentifier(() => TYPES.SchedulerService))
-    schedulerService: SchedulerService,
-    @inject(TYPES.CommonService)
-    commonService: CommonService,
-    @inject(TYPES.CitiesService)
-    citiesService: CitiesService,
-    @inject(TYPES.TicketsService)
-    ticketsService: TicketsService,
-    @inject(TYPES.CitiesDao)
-    citiesDao: CitiesDao,
-    @inject(TYPES.BusesDao)
-    busesDao: BusesDao,
-    @inject(TYPES.BusesService)
-    busesService: BusesService
+    private schedulerService: SchedulerService,
+    private commonService,
+    private citiesService: CitiesService,
+    private ticketsService: TicketsService,
+    private citiesDao: CitiesDao,
+    private busesDao: BusesDao,
+    private busesService: BusesService
   ) {
     this.schedulerService = schedulerService;
     this.commonService = commonService;
@@ -57,7 +45,7 @@ class TripsDao {
     this.busesDao = busesDao;
     this.busesService = busesService;
 
-    this.Trip = this.commonService.getOrCreateModel(this.tripSchema, 'Trip');
+    this.Trip = this.commonService.getOrCreateModel('Trip', this.tripSchema);
     log('Created new instance of TripsDao');
   }
 
@@ -529,7 +517,16 @@ class TripsDao {
     next();
   });
 
-  Trip = this.commonService.getOrCreateModel(this.tripSchema, 'Trip');
+  Trip = this.commonService.getOrCreateModel('Trip', this.tripSchema);
 }
 
 export { TripsDao };
+export default new TripsDao(
+  schedulerService,
+  commonService,
+  citiesService,
+  ticketsService,
+  citiesDao,
+  busesDao,
+  busesService
+);

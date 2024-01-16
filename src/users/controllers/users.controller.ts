@@ -2,20 +2,19 @@ import express from 'express';
 import debug from 'debug';
 import bcrypt from 'bcryptjs';
 
-import { UsersService } from '../services/users.service';
+import usersService, { UsersService } from '../services/users.service';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:users-controller');
 
-@injectable()
 class UsersController {
   /**
    * Creates a new instance of UsersController.
    * @param usersService - The users service.
    */
-  constructor(@inject(TYPES.UsersService) private usersService: UsersService) {
+  constructor(private usersService: UsersService) {
     this.usersService = usersService; // TODO : check if needed
     this.createUser = this.createUser.bind(this);
     this.getUserById = this.getUserById.bind(this);
@@ -177,3 +176,4 @@ class UsersController {
 }
 
 export { UsersController };
+export default new UsersController(usersService);

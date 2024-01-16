@@ -1,7 +1,7 @@
 import debug from 'debug';
 import express from 'express';
 
-import { BusesService } from '../services/buses.service';
+import busesService, { BusesService } from '../services/buses.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { inject, injectable } from 'inversify';
@@ -9,9 +9,8 @@ import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:bus-controller');
 
-@injectable()
 class BusesController {
-  constructor(@inject(TYPES.BusesService) private busesService: BusesService) {
+  constructor(private busesService: BusesService) {
     log('Created new instance of BusesController');
 
     this.listBuses = this.listBuses.bind(this);
@@ -145,3 +144,4 @@ class BusesController {
 }
 
 export { BusesController };
+export default new BusesController(busesService);

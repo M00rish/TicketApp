@@ -9,9 +9,7 @@ const log: debug.IDebugger = debug('app:common-service');
 
 @injectable()
 class CommonService {
-  constructor(
-    @inject(TYPES.MongooseService) private mongooseService: MongooseService
-  ) {
+  constructor(private mongooseService: MongooseService) {
     log('Created new instance of CommonService');
   }
 
@@ -21,7 +19,7 @@ class CommonService {
    * @param modelName The name of the Mongoose model.
    * @returns The Mongoose model.
    */
-  public getOrCreateModel(schema: Schema, modelName: string) {
+  public getOrCreateModel(modelName: string, schema?: Schema) {
     let model;
     try {
       model = this.mongooseService.getMongoose().model(modelName);
@@ -33,3 +31,4 @@ class CommonService {
 }
 
 export { CommonService };
+export default new CommonService(mongooseService);

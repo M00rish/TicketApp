@@ -2,18 +2,15 @@ import express from 'express';
 import debug from 'debug';
 
 import { injectable, inject } from 'inversify';
-import { ReviewsService } from '../services/reviews.service';
+import reviewsService, { ReviewsService } from '../services/reviews.service';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import AppError from '../../common/types/appError';
 import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:reviews-dao');
 
-@injectable()
 class ReviewsController {
-  constructor(
-    @inject(TYPES.ReviewsService) private reviewsService: ReviewsService
-  ) {
+  constructor(private reviewsService: ReviewsService) {
     log('Created new instance of ReviewsController');
   }
   async getReviewsByTripId(
@@ -232,3 +229,4 @@ class ReviewsController {
 }
 
 export { ReviewsController };
+export default new ReviewsController(reviewsService);

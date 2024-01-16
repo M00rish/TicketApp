@@ -2,30 +2,29 @@ import debug from 'debug';
 
 import mongooseService from '../../common/service/mongoose.service';
 import shortid from 'shortid';
-import { TripsDao } from '../../trips/daos/trips.dao';
-import { UsersDao } from '../../users/daos/users.dao';
+import tripsDao, { TripsDao } from '../../trips/daos/trips.dao';
+import usersDao, { UsersDao } from '../../users/daos/users.dao';
+import commonService, {
+  CommonService,
+} from '../../common/service/common.service';
+
 import { CreateReviewDto } from '../dtos/create.review.dto';
 import { PatchReviewDto } from '../dtos/patch.review.dto';
-import { CommonService } from '../../common/service/common.service';
-import { inject, injectable } from 'inversify';
-import { TYPES } from '../../ioc/types';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 
 const log: debug.IDebugger = debug('app:reviews-dao');
 
-// TODO : inject mongooseService in all DAOs
-@injectable()
 class ReviewsDao {
   constructor(
-    @inject(TYPES.TripsDao) private tripsDao: TripsDao,
-    @inject(TYPES.CommonService) private commonService: CommonService,
-    @inject(TYPES.UsersDao) private usersDao: UsersDao
+    private tripsDao: TripsDao,
+    private commonService: CommonService,
+    private usersDao: UsersDao
   ) {
     log('Created new instance of ReviewsDao');
     this.Review = this.commonService.getOrCreateModel(
-      this.reviewSchema,
-      'Review'
+      'Review',
+      this.reviewSchema
     );
   }
 
@@ -260,7 +259,8 @@ class ReviewsDao {
     next();
   });
 
-  Review = this.commonService.getOrCreateModel(this.reviewSchema, 'Review');
+  Review = this.commonService.getOrCreateModel('Review', this.reviewSchema);
 }
 
 export { ReviewsDao };
+export default new ReviewsDao(tripsDao, commonService, usersDao);

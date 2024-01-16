@@ -10,7 +10,6 @@ import { injectable } from 'inversify';
 
 const log: debug.IDebugger = debug('app:Jwt-Middlware');
 
-@injectable()
 class JwtMiddleware {
   /**
    * Middleware function to check the validity of a JWT token in the request header.
@@ -145,3 +144,4 @@ class JwtMiddleware {
 }
 
 export { JwtMiddleware };
+export default new JwtMiddleware();

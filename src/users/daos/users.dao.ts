@@ -8,19 +8,20 @@ import { PatchUserDto } from '../dtos/patch.user.dto';
 import mongooseService from '../../common/service/mongoose.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
-import { CommonService } from '../../common/service/common.service';
+import commonService, {
+  CommonService,
+} from '../../common/service/common.service';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:in-memory-dao');
 
-@injectable()
 class UsersDao {
-  constructor(
-    @inject(TYPES.CommonService) private commonService: CommonService
-  ) {
+  constructor(private commonService: CommonService) {
+    this.commonService = commonService;
+    this.User = this.commonService.getOrCreateModel('User', this.userSchema);
+
     log('Created new instance of UsersDao');
-    this.User = this.commonService.getOrCreateModel(this.userSchema, 'User');
   }
 
   /**
@@ -298,7 +299,8 @@ class UsersDao {
     next();
   });
 
-  User = this.commonService.getOrCreateModel(this.userSchema, 'User');
+  User = this.commonService.getOrCreateModel('User', this.userSchema);
 }
 
 export { UsersDao };
+export default new UsersDao(commonService);

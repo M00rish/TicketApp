@@ -2,19 +2,18 @@ import debug from 'debug';
 import { PatchUserDto } from '../dtos/patch.user.dto';
 import { CreateUserDto } from '../dtos/create.user.dto';
 import { CRUD } from '../../common/interfaces/crud.interface';
-import { UsersDao } from '../daos/users.dao';
+import usersDao, { UsersDao } from '../daos/users.dao';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:Users-Service');
 
-@injectable()
 class UsersService implements CRUD {
   /**
    * Creates a new instance of the UsersService.
    * @param usersDao - The users data access object.
    */
-  constructor(@inject(TYPES.UsersDao) private usersDao: UsersDao) {
+  constructor(private usersDao: UsersDao) {
     log('Created new instance of UsersService');
   }
 
@@ -102,3 +101,4 @@ class UsersService implements CRUD {
 }
 
 export { UsersService };
+export default new UsersService(usersDao);

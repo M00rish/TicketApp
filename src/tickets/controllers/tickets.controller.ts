@@ -2,17 +2,14 @@ import express from 'express';
 import debug from 'debug';
 
 import { container } from '../../ioc/inversify.config';
-import { TicketsService } from '../services/tickets.service';
+import ticketsService, { TicketsService } from '../services/tickets.service';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:tickets-controller');
 
-@injectable()
 class TicketsController {
-  constructor(
-    @inject(TYPES.TicketsService) private ticketsService: TicketsService
-  ) {
+  constructor(private ticketsService: TicketsService) {
     log('Created new instance of TicketsController');
   }
 
@@ -111,3 +108,4 @@ class TicketsController {
 }
 
 export { TicketsController };
+export default new TicketsController(ticketsService);

@@ -3,7 +3,9 @@ import shortid from 'shortid';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import AppError from '../../common/types/appError';
 import mongooseService from '../../common/service/mongoose.service';
-import { CommonService } from '../../common/service/common.service';
+import commonService, {
+  CommonService,
+} from '../../common/service/common.service';
 import { CreateBusDto } from '../dtos/create.bus.dto';
 import { PatchBusDto } from '../dtos/patch.bus.dto';
 import { inject, injectable } from 'inversify';
@@ -11,12 +13,11 @@ import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:buses-dao');
 
-@injectable()
 class BusesDao {
-  constructor(
-    @inject(TYPES.CommonService) private commonService: CommonService
-  ) {
+  constructor(private commonService: CommonService) {
     log('Created new instance of BusesDao');
+
+    this.Bus = this.commonService.getOrCreateModel('Bus', this.busSchema);
   }
 
   /**
@@ -156,7 +157,8 @@ class BusesDao {
   //   // this.select('-createdAt -updatedAt -__v');
   // });
 
-  Bus = this.commonService.getOrCreateModel(this.busSchema, 'Bus');
+  Bus = this.commonService.getOrCreateModel('Bus', this.busSchema);
 }
 
 export { BusesDao };
+export default new BusesDao(commonService);

@@ -4,35 +4,38 @@ import shortid from 'shortid';
 import { injectable, inject } from 'inversify';
 import mongooseService from '../../common/service/mongoose.service';
 import AppError from '../../common/types/appError';
-import { UsersDao } from '../../users/daos/users.dao';
-import { TripsDao } from '../../trips/daos/trips.dao';
-import { BusesDao } from '../../buses/daos/buses.dao';
+import usersDao, { UsersDao } from '../../users/daos/users.dao';
+import tripsDao, { TripsDao } from '../../trips/daos/trips.dao';
+import busesDao, { BusesDao } from '../../buses/daos/buses.dao';
 import { PatchTicketDto } from '../dtos/patch.ticket.dto';
 import { CreateTicketDto } from '../dtos/create.ticket.dto';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
-import { CommonService } from '../../common/service/common.service';
+import commonService, {
+  CommonService,
+} from '../../common/service/common.service';
 import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:trips-dao');
 
-@injectable()
 class TicketsDao {
   constructor(
-    @inject(TYPES.CommonService) private commonService: CommonService,
-    @inject(TYPES.UsersDao) private usersDao: UsersDao,
-    @inject(TYPES.TripsDao) private tripsDao: TripsDao,
-    @inject(TYPES.BusesDao) private busesDao: BusesDao
+    private commonService: CommonService,
+    private usersDao: UsersDao,
+    private tripsDao: TripsDao,
+    private busesDao: BusesDao
   ) {
     log('Created new instance of TicketsDao');
 
     this.Ticket = this.commonService.getOrCreateModel(
-      this.ticketSchema,
-      'Ticket'
+      'Ticket',
+      this.ticketSchema
     );
   }
 
-  async createTicket(seatNumber: number, tripId: string, userId: string) {
+  async createTicket(ressource: any) {
     try {
+      const { seatNumber, tripId, userId } = ressource;
+
       if (!seatNumber || !tripId || !userId) {
         throw new AppError(
           true,
@@ -264,7 +267,8 @@ class TicketsDao {
     next();
   });
 
-  Ticket = this.commonService.getOrCreateModel(this.ticketSchema, 'Ticket');
+  Ticket = this.commonService.getOrCreateModel('Ticket', this.ticketSchema);
 }
 
 export { TicketsDao };
+export default new TicketsDao(commonService, usersDao, tripsDao, busesDao);
