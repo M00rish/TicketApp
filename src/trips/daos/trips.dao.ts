@@ -23,7 +23,6 @@ import { PatchTripDto } from '../dtos/patch.trips.dto';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { TYPES } from '../../ioc/types';
-import { container } from '../../ioc/inversify.config';
 
 const log: debug.IDebugger = debug('app:trips-dao');
 

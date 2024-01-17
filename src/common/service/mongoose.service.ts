@@ -4,7 +4,6 @@ import mongoose from 'mongoose';
 
 const log: debug.IDebugger = debug('app:mongoose-service');
 
-@injectable()
 class MongooseService {
   private count = 0;
   public DB_URI: string = '';

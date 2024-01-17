@@ -7,7 +7,6 @@ import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:common-service');
 
-@injectable()
 class CommonService {
   constructor(private mongooseService: MongooseService) {
     log('Created new instance of CommonService');

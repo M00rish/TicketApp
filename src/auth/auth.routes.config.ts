@@ -2,12 +2,11 @@ import express from 'express';
 import { body } from 'express-validator';
 
 import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
-import { container } from '../ioc/inversify.config';
 import { CommonRoutesConfig } from '../common/common.routes.config';
 import { TYPES } from '../ioc/types';
-import { AuthMiddlware } from './middleware/auth.middleware';
-import { AuthController } from './controllers/auth.controller';
-import { JwtMiddleware } from './middleware/jwt.middleware';
+import authMiddlware from './middleware/auth.middleware';
+import authController from './controllers/auth.controller';
+import jwtMiddleware from './middleware/jwt.middleware';
 
 export class AuthRoutes extends CommonRoutesConfig {
   private authMiddleware;
@@ -18,10 +17,10 @@ export class AuthRoutes extends CommonRoutesConfig {
   constructor(app: express.Application) {
     super(app, 'AuthRoutes');
 
-    this.authMiddleware = container.resolve(AuthMiddlware);
-    this.authController = container.resolve(AuthController);
-    this.jwtMiddleware = container.resolve(JwtMiddleware);
-    this.bodyValidationMiddleware = container.resolve(BodyValidationMiddleware);
+    this.authMiddleware = authMiddlware;
+    this.authController = authController;
+    this.jwtMiddleware = jwtMiddleware;
+    this.bodyValidationMiddleware = BodyValidationMiddleware;
   }
 
   configureRoutes(): express.Application {

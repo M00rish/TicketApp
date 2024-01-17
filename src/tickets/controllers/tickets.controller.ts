@@ -1,7 +1,6 @@
 import express from 'express';
 import debug from 'debug';
 
-import { container } from '../../ioc/inversify.config';
 import ticketsService, { TicketsService } from '../services/tickets.service';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '../../ioc/types';

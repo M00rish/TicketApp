@@ -1,14 +1,13 @@
 import express from 'express';
 import { body } from 'express-validator';
 
-import { container } from '../ioc/inversify.config';
 import { CommonRoutesConfig } from '../common/common.routes.config';
-import { JwtMiddleware } from '../auth/middleware/jwt.middleware';
+import jwtMiddleware from '../auth/middleware/jwt.middleware';
 import { imageUpdateMiddleware } from '../common/middlewares/image.update.middleware';
-import { PermissionMiddleware } from '../common/middlewares/common.permission.middleware';
+import permissionMiddleware from '../common/middlewares/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
 import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
-import { BusesController } from './controllers/buses.controller';
+import busesController from './controllers/buses.controller';
 
 export class BusesRoutes extends CommonRoutesConfig {
   private jwtMiddleware;
@@ -20,11 +19,11 @@ export class BusesRoutes extends CommonRoutesConfig {
   constructor(app: express.Application) {
     super(app, 'busesRoutes');
 
-    this.jwtMiddleware = container.resolve(JwtMiddleware);
-    this.permissionMiddleware = container.resolve(PermissionMiddleware);
-    this.bodyValidationMiddleware = container.resolve(BodyValidationMiddleware);
-    this.imageUpdateMiddleware = container.resolve(imageUpdateMiddleware);
-    this.busesController = container.resolve(BusesController);
+    this.jwtMiddleware = jwtMiddleware;
+    this.permissionMiddleware = permissionMiddleware;
+    this.bodyValidationMiddleware = BodyValidationMiddleware;
+    this.imageUpdateMiddleware = imageUpdateMiddleware;
+    this.busesController = busesController;
   }
 
   configureRoutes() {

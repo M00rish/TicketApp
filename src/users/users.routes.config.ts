@@ -1,14 +1,14 @@
 import express from 'express';
 import { body } from 'express-validator';
 
-import { container } from '../ioc/inversify.config';
-import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
 import { CommonRoutesConfig } from '../common/common.routes.config';
-import { UsersController } from './controllers/users.controller';
-import { UsersMiddleware } from './middleware/users.middleware';
-import { JwtMiddleware } from '../auth/middleware/jwt.middleware';
-import { PermissionMiddleware } from '../common/middlewares/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
+
+import BodyValidationMiddleware from '../common/middlewares/body.validation.middleware';
+import usersController from './controllers/users.controller';
+import usersMiddleware from './middleware/users.middleware';
+import jwtMiddleware from '../auth/middleware/jwt.middleware';
+import permissionMiddleware from '../common/middlewares/common.permission.middleware';
 import { imageUpdateMiddleware } from '../common/middlewares/image.update.middleware';
 
 export class UsersRoutes extends CommonRoutesConfig {
@@ -22,12 +22,12 @@ export class UsersRoutes extends CommonRoutesConfig {
   constructor(app: express.Application) {
     super(app, 'UsersRoutes');
 
-    this.jwtMiddleware = container.resolve(JwtMiddleware);
-    this.usersController = container.resolve(UsersController);
-    this.usersMiddleware = container.resolve(UsersMiddleware);
-    this.permissionMiddleware = container.resolve(PermissionMiddleware);
-    this.bodyValidationMiddleware = container.resolve(BodyValidationMiddleware);
-    this.imageUpdateMiddleware = container.resolve(imageUpdateMiddleware);
+    this.jwtMiddleware = jwtMiddleware;
+    this.usersController = usersController;
+    this.usersMiddleware = usersMiddleware;
+    this.permissionMiddleware = permissionMiddleware;
+    this.bodyValidationMiddleware = BodyValidationMiddleware;
+    this.imageUpdateMiddleware = imageUpdateMiddleware;
   }
 
   configureRoutes(): express.Application {

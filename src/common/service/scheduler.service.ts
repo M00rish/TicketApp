@@ -1,6 +1,5 @@
 import { Agenda } from '@hokify/agenda';
 import debug from 'debug';
-import { container } from '../../ioc/inversify.config';
 import getDecorators from 'inversify-inject-decorators';
 
 import mongooseService from './mongoose.service';

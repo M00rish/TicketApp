@@ -1,11 +1,10 @@
 import express from 'express';
 import { body } from 'express-validator';
 
-import { container } from '../ioc/inversify.config';
 import { CommonRoutesConfig } from '../common/common.routes.config';
-import { TicketsController } from './controllers/tickets.controller';
-import { JwtMiddleware } from '../auth/middleware/jwt.middleware';
-import { PermissionMiddleware } from '../common/middlewares/common.permission.middleware';
+import ticketsController from './controllers/tickets.controller';
+import jwtMiddleware from '../auth/middleware/jwt.middleware';
+import permissionMiddleware from '../common/middlewares/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
 import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
 
@@ -18,10 +17,10 @@ export class ticketsRoute extends CommonRoutesConfig {
   constructor(app: express.Application) {
     super(app, 'TicketsRoutes');
 
-    this.jwtMiddleware = container.resolve(JwtMiddleware);
-    this.permissionMiddleware = container.resolve(PermissionMiddleware);
-    this.bodyValidationMiddleware = container.resolve(BodyValidationMiddleware);
-    this.ticketsController = container.resolve(TicketsController);
+    this.jwtMiddleware = jwtMiddleware;
+    this.permissionMiddleware = permissionMiddleware;
+    this.bodyValidationMiddleware = BodyValidationMiddleware;
+    this.ticketsController = ticketsController;
   }
 
   configureRoutes() {

@@ -7,7 +7,6 @@ import tripsDao, { TripsDao } from '../daos/trips.dao';
 import { PatchTripDto } from '../dtos/patch.trips.dto';
 import { injectable, inject, LazyServiceIdentifer } from 'inversify';
 import { TYPES } from '../../ioc/types';
-import { container } from '../../ioc/inversify.config';
 
 const log: debug.IDebugger = debug('app:trips-service');
 

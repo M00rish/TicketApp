@@ -6,6 +6,11 @@ services:
       - ./data:/data/db
     ports:
       - '27017:27017'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 200M
 
   mongo-test:
     image: mongo
@@ -13,3 +18,8 @@ services:
       - ./data-test:/data/db
     ports:
       - '27018:27017'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 200M
