@@ -69,4 +69,5 @@ class imageUpdateMiddleware {
     };
 }
 
+export default new imageUpdateMiddleware();
 export { imageUpdateMiddleware };

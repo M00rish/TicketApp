@@ -14,6 +14,12 @@ const log: debug.IDebugger = debug('app:common-permission-middleware');
 class PermissionMiddleware {
   constructor(private reviewsService: ReviewsService) {
     log('Created instance of CommonPermissionMiddleware');
+
+    this.onlyAdminOrUserWhoCreatedReviewCanAccess =
+      this.onlyAdminOrUserWhoCreatedReviewCanAccess.bind(this);
+    this.onlySameUserOrAdminCanAccess =
+      this.onlySameUserOrAdminCanAccess.bind(this);
+    this.permissionsFlagsRequired = this.permissionsFlagsRequired.bind(this);
   }
 
   /**

@@ -11,6 +11,9 @@ import { injectable } from 'inversify';
 const log: debug.IDebugger = debug('app:Jwt-Middlware');
 
 class JwtMiddleware {
+  constructor() {
+    log('Created new instance of JwtMiddleware');
+  }
   /**
    * Middleware function to check the validity of a JWT token in the request header.
    * If the token is valid, it sets the decoded token in the response locals and calls the next middleware.

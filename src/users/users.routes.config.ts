@@ -1,15 +1,18 @@
 import express from 'express';
 import { body } from 'express-validator';
+import debug from 'debug';
 
 import { CommonRoutesConfig } from '../common/common.routes.config';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
 
-import BodyValidationMiddleware from '../common/middlewares/body.validation.middleware';
 import usersController from './controllers/users.controller';
 import usersMiddleware from './middleware/users.middleware';
 import jwtMiddleware from '../auth/middleware/jwt.middleware';
 import permissionMiddleware from '../common/middlewares/common.permission.middleware';
-import { imageUpdateMiddleware } from '../common/middlewares/image.update.middleware';
+import imageUpdateMiddleware from '../common/middlewares/image.update.middleware';
+import bodyValidationMiddleware from '../common/middlewares/body.validation.middleware';
+
+const log: debug.IDebugger = debug('app:users-routes');
 
 export class UsersRoutes extends CommonRoutesConfig {
   private jwtMiddleware;
@@ -26,8 +29,10 @@ export class UsersRoutes extends CommonRoutesConfig {
     this.usersController = usersController;
     this.usersMiddleware = usersMiddleware;
     this.permissionMiddleware = permissionMiddleware;
-    this.bodyValidationMiddleware = BodyValidationMiddleware;
+    this.bodyValidationMiddleware = bodyValidationMiddleware;
     this.imageUpdateMiddleware = imageUpdateMiddleware;
+
+    this.configureRoutes();
   }
 
   configureRoutes(): express.Application {
