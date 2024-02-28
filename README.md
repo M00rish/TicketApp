@@ -1,0 +1,1 @@
+APP for managing trips 
