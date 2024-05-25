@@ -7,11 +7,10 @@ const log: debug.IDebugger = debug('app:mongoose-service');
 class MongooseService {
   private count = 0;
   public DB_URI: string = '';
-  public log = log;
 
   constructor() {
-    this.log('Created new instance of MongooseService');
     this.connectWithRetry();
+    log('Created new instance of MongooseService');
   }
 
   /**
@@ -27,20 +26,20 @@ class MongooseService {
    * @returns {Promise<void>} A promise that resolves when the connection is successful.
    */
   public connectWithRetry = async () => {
-    this.log('Attempting MongoDB connection (will retry if needed)');
+    log('Attempting MongoDB connection (will retry if needed)');
 
     typeof global.it === 'function'
-      ? (this.DB_URI = `mongodb://localhost:27018/test-db`)
-      : (this.DB_URI = `mongodb://localhost:27017/api-db`);
+      ? (this.DB_URI = process.env.MONGO_TEST_URI)
+      : (this.DB_URI = process.env.MONGO_URI);
 
     await mongoose
       .connect(this.DB_URI)
       .then(() => {
-        this.log('MongoDB is connected');
+        log('MongoDB is connected');
       })
       .catch((error) => {
         const retrySecond = 5;
-        this.log(
+        log(
           `MongoDB connection unsuccessful (will retry #${++this
             .count} after ${retrySecond} seconds):`,
           error
@@ -87,5 +86,4 @@ class MongooseService {
   }
 }
 
-export default new MongooseService();
 export { MongooseService };

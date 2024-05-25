@@ -8,7 +8,7 @@ import { injectable } from 'inversify';
 
 const log: debug.IDebugger = debug('app:image-update-middleware');
 
-class imageUpdateMiddleware {
+class ImageUpdateMiddleware {
   updateImage =
     (ressource: string) =>
     (
@@ -69,5 +69,4 @@ class imageUpdateMiddleware {
     };
 }
 
-export default new imageUpdateMiddleware();
-export { imageUpdateMiddleware };
+export { ImageUpdateMiddleware };

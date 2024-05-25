@@ -6,7 +6,7 @@ import ticketsController from './controllers/tickets.controller';
 import jwtMiddleware from '../auth/middleware/jwt.middleware';
 import permissionMiddleware from '../common/middlewares/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
-import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
+import bodyValidationMiddleware from '../common/middlewares/body.validation.middleware';
 
 export class ticketsRoute extends CommonRoutesConfig {
   private jwtMiddleware;
@@ -19,8 +19,10 @@ export class ticketsRoute extends CommonRoutesConfig {
 
     this.jwtMiddleware = jwtMiddleware;
     this.permissionMiddleware = permissionMiddleware;
-    this.bodyValidationMiddleware = BodyValidationMiddleware;
+    this.bodyValidationMiddleware = bodyValidationMiddleware;
     this.ticketsController = ticketsController;
+
+    this.configureRoutes();
   }
 
   configureRoutes() {

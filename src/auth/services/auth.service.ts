@@ -2,7 +2,7 @@ import express from 'express';
 import debug from 'debug';
 import Jwt from 'jsonwebtoken';
 
-import usersService, { UsersService } from '../../users/services/users.service';
+import { UsersService } from '../../users/services/users.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { inject, injectable } from 'inversify';
@@ -63,6 +63,7 @@ class AuthService {
 
       return accessToken;
     } catch (err) {
+      log(`Error`, err);
       if (err instanceof AppError) {
         throw err;
       }
@@ -153,4 +154,3 @@ class AuthService {
 }
 
 export { AuthService };
-export default new AuthService(usersService);

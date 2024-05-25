@@ -102,4 +102,3 @@ class BodyValidationMiddleware {
 }
 
 export { BodyValidationMiddleware };
-export default new BodyValidationMiddleware();

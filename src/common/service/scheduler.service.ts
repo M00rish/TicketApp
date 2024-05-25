@@ -2,11 +2,9 @@ import { Agenda } from '@hokify/agenda';
 import debug from 'debug';
 import getDecorators from 'inversify-inject-decorators';
 
-import mongooseService from './mongoose.service';
-import tripsService, { TripsService } from '../../trips/services/trips.service';
-import ticketsService, {
-  TicketsService,
-} from '../../tickets/services/tickets.service';
+import { MongooseService } from './mongoose.service';
+import { TripsService } from '../../trips/services/trips.service';
+import { TicketsService } from '../../tickets/services/tickets.service';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '../../ioc/types';
 
@@ -17,8 +15,6 @@ const log: debug.IDebugger = debug('app:scheduler-service');
  */
 
 class SchedulerService {
-  private ticketsService: TicketsService;
-  private tripsService: TripsService;
   private agenda: Agenda;
 
   /**
@@ -26,9 +22,13 @@ class SchedulerService {
    * @param tripsService The trips service.
    * @param ticketsService The tickets service.
    */
-  constructor(tripsService: TripsService, ticketsService: TicketsService) {
+  constructor(
+    private tripsService: TripsService,
+    private ticketsService: TicketsService,
+    private mongooseService: MongooseService
+  ) {
     this.agenda = new Agenda({
-      db: { address: mongooseService.DB_URI },
+      db: { address: this.mongooseService.DB_URI },
     });
 
     this.tripsService = tripsService;
@@ -138,4 +138,3 @@ class SchedulerService {
 }
 
 export { SchedulerService };
-export default new SchedulerService(tripsService, ticketsService);

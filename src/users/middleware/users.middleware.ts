@@ -2,7 +2,7 @@ import express from 'express';
 import debug from 'debug';
 
 import { injectable, inject } from 'inversify';
-import usersService, { UsersService } from '../services/users.service';
+import { UsersService } from '../services/users.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { TYPES } from '../../ioc/types';
@@ -11,6 +11,13 @@ const log: debug.IDebugger = debug('app:Users-Middleware');
 
 class UsersMiddleware {
   constructor(private usersService: UsersService) {
+    this.usersService = usersService;
+    this.validateSameEmailDoesntExist =
+      this.validateSameEmailDoesntExist.bind(this);
+    this.validatePatchEmail = this.validatePatchEmail.bind(this);
+    this.extractUserId = this.extractUserId.bind(this);
+    this.userCannotChangePermission =
+      this.userCannotChangePermission.bind(this);
     log('Created new instance of UsersMiddleware');
   }
 
@@ -119,4 +126,3 @@ class UsersMiddleware {
 }
 
 export { UsersMiddleware };
-export default new UsersMiddleware(usersService);

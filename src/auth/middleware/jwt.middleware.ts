@@ -147,4 +147,3 @@ class JwtMiddleware {
 }
 
 export { JwtMiddleware };
-export default new JwtMiddleware();

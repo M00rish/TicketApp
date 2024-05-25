@@ -3,7 +3,7 @@ import debug from 'debug';
 import bcrypt from 'bcryptjs';
 import { inject, injectable } from 'inversify';
 
-import usersService, { UsersService } from '../../users/services/users.service';
+import { UsersService } from '../../users/services/users.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { TYPES } from '../../ioc/types';
@@ -33,33 +33,27 @@ class AuthMiddlware {
     res: express.Response,
     next: express.NextFunction
   ) {
-    const user: any = await this.usersService.getUserByEmailWithPassword(
-      req.body.email
-    );
+    try {
+      const user: any = await this.usersService.getUserByEmailWithPassword(
+        req.body.email
+      );
 
-    if (user && user.password) {
-      const hashPassowrd = user.password;
+      if (user && user.password) {
+        const hashPassowrd = user.password;
 
-      if (bcrypt.compareSync(req.body.password, hashPassowrd)) {
-        req.body = {
-          userId: user._id,
-          refreshToken: user.refreshToken,
-          permissionFlags: user.permissionFlags,
-        };
-        return next();
+        if (bcrypt.compareSync(req.body.password, hashPassowrd)) {
+          req.body = {
+            userId: user._id,
+            refreshToken: user.refreshToken,
+            permissionFlags: user.permissionFlags,
+          };
+          return next();
+        }
       }
+    } catch (error: any) {
+      return next(error);
     }
-
-    const error = new AppError(
-      true,
-      'LoginError',
-      HttpStatusCode.NotFound,
-      'Invalid email or password'
-    );
-
-    return next(error);
   }
 }
 
 export { AuthMiddlware };
-export default new AuthMiddlware(usersService);

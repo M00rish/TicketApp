@@ -5,20 +5,17 @@ import bcrypt from 'bcryptjs';
 import { CreateUserDto } from '../dtos/create.user.dto';
 import { PutUserDto } from '../dtos/put.user.dto';
 import { PatchUserDto } from '../dtos/patch.user.dto';
-import mongooseService from '../../common/service/mongoose.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
-import commonService, {
-  CommonService,
-} from '../../common/service/common.service';
+import { CommonService } from '../../common/service/common.service';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '../../ioc/types';
+import { MongooseService } from '../../common/service/mongoose.service';
 
 const log: debug.IDebugger = debug('app:in-memory-dao');
 
 class UsersDao {
   constructor(private commonService: CommonService) {
-    this.commonService = commonService;
     this.User = this.commonService.getOrCreateModel('User', this.userSchema);
 
     log('Created new instance of UsersDao');
@@ -31,18 +28,40 @@ class UsersDao {
    * @throws An error If there was an error creating the user.
    */
   async createUser(userFields: CreateUserDto) {
-    try {
-      const userId = shortid.generate();
-      const user = new this.User({
-        _id: userId,
-        ...userFields,
-      });
+    const userId = shortid.generate();
+    const user = new this.User({
+      _id: userId,
+      ...userFields,
+    });
 
-      await user.save();
-      return userId;
-    } catch (error: any) {
-      throw error;
-    }
+    await user.save();
+    return userId;
+  }
+
+  /**
+   * Retrieves a list of users from the database.
+   * @param limit - The maximum number of users to retrieve (default: 25).
+   * @param page - The page number of results to retrieve (default: 0).
+   * @returns A Promise that resolves to an array of User objects.
+   * @throws An error if there was a problem retrieving the users.
+   */
+  async list(limit = 25, page = 0) {
+    return await this.User.find()
+      .limit(limit)
+      .skip(limit * page)
+      .exec();
+  }
+
+  /**
+   * Retrieves a user by their ID.
+   * @param {string} userId - The ID of the user to retrieve.
+   * @returns {Promise<User>} A promise that resolves with the retrieved user.
+   * @throws An AppError If the user is not found.
+   */
+  async getById(userId: string) {
+    return await this.User.findOne({ _id: userId })
+      .select('-refreshToken -password')
+      .exec();
   }
 
   /**
@@ -52,35 +71,21 @@ class UsersDao {
    * @returns {Promise<string>} - A promise that resolves with the ID of the updated user.
    * @throws An Error if the user is not found or if the update fails.
    */
-  async updateUserById(userId: string, userFields: PatchUserDto | PutUserDto) {
-    try {
-      const user = await this.User.findById({ _id: userId }).exec();
-      if (!user)
-        throw new AppError(
-          true,
-          'RessourceNotFoundError',
-          HttpStatusCode.NotFound,
-          'User not found'
-        );
+  async updateById(userId: string, userFields: PatchUserDto | PutUserDto) {
+    return await this.User.findOneAndUpdate(
+      { _id: userId },
+      { $set: userFields },
+      { new: true }
+    ).exec();
+  }
 
-      const updatedUser = await this.User.findOneAndUpdate(
-        { _id: userId },
-        { $set: userFields },
-        { new: true }
-      ).exec();
-
-      if (!updatedUser)
-        throw new AppError(
-          false,
-          'updateUserError',
-          HttpStatusCode.InternalServerError,
-          'Failed to update user'
-        );
-
-      return updatedUser._id;
-    } catch (error: any) {
-      throw error;
-    }
+  /**
+   * Deletes a user by their ID.
+   * @param {string} userId - The ID of the user to delete.
+   * @throws An AppError If the user is not found or if there is an error deleting the user.
+   */
+  async deleteById(userId: string) {
+    return await this.User.deleteOne({ _id: userId }).exec();
   }
 
   /**
@@ -90,95 +95,7 @@ class UsersDao {
    * @throws An AppError if the user is not found.
    */
   async getUserByEmail(email: string) {
-    try {
-      const user = await this.User.findOne({ email: email }).exec();
-
-      if (!user)
-        throw new AppError(
-          false,
-          'RessourceNotFoundError',
-          HttpStatusCode.NotFound,
-          'User not found'
-        );
-
-      return user;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Retrieves a user by their ID.
-   * @param {string} userId - The ID of the user to retrieve.
-   * @returns {Promise<User>} A promise that resolves with the retrieved user.
-   * @throws An AppError If the user is not found.
-   */
-  async getUserById(userId: string) {
-    try {
-      const user = await this.User.findOne({ _id: userId })
-        .select('-refreshToken -password')
-        .exec();
-
-      if (!user)
-        throw new AppError(
-          true,
-          'RessourceNotFoundError',
-          HttpStatusCode.NotFound,
-          'User not found'
-        );
-
-      return user;
-    } catch (error) {
-      throw error;
-    }
-  }
-  /**
-   * Retrieves a list of users from the database.
-   * @param limit - The maximum number of users to retrieve (default: 25).
-   * @param page - The page number of results to retrieve (default: 0).
-   * @returns A Promise that resolves to an array of User objects.
-   * @throws An error if there was a problem retrieving the users.
-   */
-  async listUsers(limit = 25, page = 0) {
-    try {
-      const users = await this.User.find()
-        .limit(limit)
-        .skip(limit * page)
-        .exec();
-      return users;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Deletes a user by their ID.
-   * @param {string} userId - The ID of the user to delete.
-   * @throws An AppError If the user is not found or if there is an error deleting the user.
-   */
-  async deleteUserById(userId: string) {
-    try {
-      const user = await this.User.findById({ _id: userId }).exec();
-
-      if (!user)
-        throw new AppError(
-          true,
-          'RessourceNotFoundError',
-          HttpStatusCode.NotFound,
-          'User not found'
-        );
-
-      const deletedDoc = await this.User.deleteOne({ _id: userId }).exec();
-      if (deletedDoc.deletedCount === 0)
-        throw new AppError(
-          false,
-          'deleteUserError',
-          HttpStatusCode.InternalServerError,
-          'Failed to delete user'
-        );
-    } catch (error) {
-      throw error;
-    }
+    return await this.User.findOne({ email: email }).exec();
   }
 
   /**
@@ -187,22 +104,9 @@ class UsersDao {
    * @returns A Promise that resolves to the user object if found, or throws an error if not found.
    */
   async getUserByEmailWithPassword(email: string) {
-    try {
-      const user = await this.User.findOne({ email: email })
-        .select('_id email permissionFlags +password')
-        .exec();
-      if (!user)
-        throw new AppError(
-          true,
-          'RessourceNotFoundError',
-          HttpStatusCode.NotFound,
-          'User not found'
-        );
-
-      return user;
-    } catch (error) {
-      throw error;
-    }
+    return await this.User.findOne({ email: email })
+      .select('_id email permissionFlags +password')
+      .exec();
   }
 
   /**
@@ -213,33 +117,11 @@ class UsersDao {
 
    */
   async updateUserRefreshTokenById(userId: string, refreshToken: string) {
-    try {
-      const user = await this.User.findById({ _id: userId }).exec();
-
-      if (!user)
-        throw new AppError(
-          true,
-          'RessourceNotFoundError',
-          HttpStatusCode.NotFound,
-          'User not found'
-        );
-
-      const updatedUser = await this.User.findOneAndUpdate(
-        { _id: userId },
-        { refreshToken },
-        { new: true }
-      ).exec();
-
-      if (!updatedUser)
-        throw new AppError(
-          false,
-          'updateUserRefreshTokenError',
-          HttpStatusCode.InternalServerError,
-          'Failed to update user'
-        );
-    } catch (error: any) {
-      throw error;
-    }
+    return await this.User.findOneAndUpdate(
+      { _id: userId },
+      { refreshToken },
+      { new: true }
+    ).exec();
   }
 
   /**
@@ -247,17 +129,13 @@ class UsersDao {
    * @returns {Promise<void>} A promise that resolves when the operation is complete.
    */
   async deleteAllUsers(): Promise<void> {
-    try {
-      await this.User.deleteMany({}).exec();
-    } catch (error: any) {
-      throw error;
-    }
+    await this.User.deleteMany({}).exec();
   }
 
   /**
    * Mongoose schema for the User model.
    */
-  schema = mongooseService.getMongoose().Schema;
+  schema = this.commonService.getMongoose().Schema;
 
   /**
    * Mongoose schema for the User model.
@@ -303,4 +181,3 @@ class UsersDao {
 }
 
 export { UsersDao };
-export default new UsersDao(commonService);

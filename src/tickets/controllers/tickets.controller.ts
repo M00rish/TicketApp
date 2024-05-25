@@ -1,7 +1,7 @@
 import express from 'express';
 import debug from 'debug';
 
-import ticketsService, { TicketsService } from '../services/tickets.service';
+import { TicketsService } from '../services/tickets.service';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '../../ioc/types';
 
@@ -107,4 +107,3 @@ class TicketsController {
 }
 
 export { TicketsController };
-export default new TicketsController(ticketsService);

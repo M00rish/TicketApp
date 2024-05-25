@@ -1,6 +1,6 @@
 import express from 'express';
 import debug from 'debug';
-import authService, { AuthService } from '../services/auth.service';
+import { AuthService } from '../services/auth.service';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../ioc/types';
@@ -36,4 +36,3 @@ class AuthController {
 }
 
 export { AuthController };
-export default new AuthController(authService);

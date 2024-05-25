@@ -2,7 +2,7 @@ import express from 'express';
 import debug from 'debug';
 
 import { injectable, inject } from 'inversify';
-import reviewsService, { ReviewsService } from '../services/reviews.service';
+import { ReviewsService } from '../services/reviews.service';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import AppError from '../../common/types/appError';
 import { TYPES } from '../../ioc/types';
@@ -229,4 +229,3 @@ class ReviewsController {
 }
 
 export { ReviewsController };
-export default new ReviewsController(reviewsService);

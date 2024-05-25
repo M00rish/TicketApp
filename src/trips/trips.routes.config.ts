@@ -1,26 +1,31 @@
 import express from 'express';
 import { body } from 'express-validator';
 
+import modules from '../main';
 import { CommonRoutesConfig } from '../common/common.routes.config';
-import jwtMiddleware from '../auth/middleware/jwt.middleware';
+// import jwtMiddleware from '../auth/middleware/jwt.middleware';
 import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
-import permissionMiddleware from '../common/middlewares/common.permission.middleware';
+import { PermissionMiddleware } from '../common/middlewares/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
-import tripsController from './controllers/trips.controller';
+import { TripsController } from './controllers/trips.controller';
+import { JwtMiddleware } from '../auth/middleware/jwt.middleware';
+import  from ''
 
 export class TripsRoutes extends CommonRoutesConfig {
-  private tripsController;
-  private jwtMiddleware;
-  private permissionMiddleware;
-  private bodyValidationMiddleware;
+  private tripsController: TripsController;
+  private jwtMiddleware: JwtMiddleware;
+  private permissionMiddleware: PermissionMiddleware;
+  private bodyValidationMiddleware: BodyValidationMiddleware;
 
   constructor(app: express.Application) {
     super(app, 'TripsRoutes');
 
     this.tripsController = tripsController;
-    this.jwtMiddleware = jwtMiddleware;
+    this.jwtMiddleware = modules.jwtMiddleware;
     this.permissionMiddleware = permissionMiddleware;
-    this.bodyValidationMiddleware = BodyValidationMiddleware;
+    this.bodyValidationMiddleware = modules.bodyValidationMiddleware;
+
+    this.configureRoutes();
   }
 
   configureRoutes(): express.Application {

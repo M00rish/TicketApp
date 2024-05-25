@@ -1,11 +1,12 @@
 import debug from 'debug';
 import express from 'express';
 
-import tripsService, { TripsService } from '../services/trips.service';
+import { TripsService } from '../services/trips.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../ioc/types';
+// import tripsDao from '../daos/trips.dao';
 
 const log: debug.IDebugger = debug('app:trips-controller');
 
@@ -35,7 +36,7 @@ class TripsController {
     next: express.NextFunction
   ) {
     try {
-      const trips = await this.tripsService.list(100, 0);
+      const trips = await this.tripsService.list(10, 1);
       res.status(HttpStatusCode.Ok).json(trips);
     } catch (error: any) {
       next(error);
@@ -156,7 +157,7 @@ class TripsController {
     next: express.NextFunction
   ) {
     try {
-      await this.tripsService.deleteAll();
+      await this.tripsService.deleteAllTrips();
       res.status(204).json();
     } catch (error: any) {
       next(error);
@@ -165,4 +166,3 @@ class TripsController {
 }
 
 export { TripsController };
-export default new TripsController(tripsService);

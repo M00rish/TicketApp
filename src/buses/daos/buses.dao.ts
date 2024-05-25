@@ -2,10 +2,8 @@ import debug from 'debug';
 import shortid from 'shortid';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import AppError from '../../common/types/appError';
-import mongooseService from '../../common/service/mongoose.service';
-import commonService, {
-  CommonService,
-} from '../../common/service/common.service';
+import { MongooseService } from '../../common/service/mongoose.service';
+import { CommonService } from '../../common/service/common.service';
 import { CreateBusDto } from '../dtos/create.bus.dto';
 import { PatchBusDto } from '../dtos/patch.bus.dto';
 import { inject, injectable } from 'inversify';
@@ -13,6 +11,9 @@ import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:buses-dao');
 
+/**
+ * Data Access Object (DAO) for managing buses in the database.
+ */
 class BusesDao {
   constructor(private commonService: CommonService) {
     log('Created new instance of BusesDao');
@@ -21,122 +22,75 @@ class BusesDao {
   }
 
   /**
-   * Adds a new bus to the database.
-   * @param busFields - The fields of the bus to be added.
-   * @returns The ID of the newly added bus.
-   * @throws Throws an error if there is an issue adding the bus.
+   * Creates a new bus record in the database.
+   * @param busFields - The data for the new bus record.
+   * @returns A Promise that resolves to the ID of the created bus record.
    */
-  async addBus(busFields: CreateBusDto) {
-    try {
-      const busId = shortid.generate();
-      const bus = new this.Bus({
-        _id: busId,
-        ...busFields,
-      });
+  async create(busFields: CreateBusDto): Promise<string> {
+    const busId = shortid.generate();
+    const bus = new this.Bus({
+      _id: busId,
+      ...busFields,
+    });
 
-      await bus.save();
-      return busId;
-    } catch (error: any) {
-      throw error;
-    }
+    await bus.save();
+    return busId;
   }
 
   /**
    * Retrieves a bus by its ID.
    * @param busId - The ID of the bus to retrieve.
-   * @returns A Promise that resolves to the retrieved bus.
-   * @throws {AppError} If the bus is not found.
+   * @returns A Promise that resolves to the bus object.
    */
-  async getBusById(busId: string) {
-    try {
-      const bus = await this.Bus.findById(busId).exec();
-      if (!bus)
-        throw new AppError(
-          true,
-          'RessourceNotFoundError',
-          HttpStatusCode.NotFound,
-          'Bus not found'
-        );
-      return bus;
-    } catch (error) {
-      throw error;
-    }
+  async getById(busId: string): Promise<CreateBusDto> {
+    const bus = await this.Bus.findById(busId).exec();
+    return bus;
   }
 
   /**
-   * Retrieves all buses from the database.
-   * @returns {Promise<Array<Bus>>} A promise that resolves to an array of Bus objects.
-   * @throws {Error} If there is an error while retrieving the buses.
+   * Retrieves a list of buses.
+   * @param limit - The maximum number of buses to retrieve.
+   * @param page - The page number of the results.
+   * @returns A Promise that resolves to the list of buses.
    */
-  async getBuses() {
-    try {
-      const buses = await this.Bus.find().exec();
-
-      return buses;
-    } catch (error) {
-      throw error;
-    }
+  async list(limit: number = 25, page: number = 0): Promise<CreateBusDto[]> {
+    const buses = await this.Bus.find()
+      .limit(limit)
+      .skip(limit * page)
+      .exec();
+    return buses;
   }
 
   /**
-   * Updates a bus by its ID.
+   * Updates a bus record by its ID.
    * @param {string} busId - The ID of the bus to update.
    * @param {PatchBusDto} busFields - The fields to update on the bus.
-   * @returns {Promise<string>} The ID of the updated bus.
-   * @throws {AppError} If the bus is not found.
+   * @returns {Promise<void>} - A promise that resolves when the update is complete.
    */
-  async updateBusById(busId: string, busFields: PatchBusDto) {
-    try {
-      const bus = await this.Bus.findById(busId).exec();
-      if (!bus)
-        throw new AppError(
-          true,
-          'RessourceNotFoundError',
-          HttpStatusCode.NotFound,
-          'Bus not found'
-        );
-      bus.set(busFields);
-      await bus.save();
-      return busId;
-    } catch (error) {
-      throw error;
-    }
+  async updateById(busId: string, busFields: PatchBusDto): Promise<void> {
+    await this.Bus.findByIdAndUpdate(busId).exec();
   }
 
   /**
-   * Removes a bus by its ID.
-   * @param {string} busId - The ID of the bus to be removed.
-   * @returns {Promise<string>} - The ID of the removed bus.
-   * @throws {AppError} - If the bus is not found.
+   * Deletes a bus by its ID.
+   * @param {string} busId - The ID of the bus to delete.
+   * @returns {Promise<void>} - A promise that resolves when the bus is deleted.
    */
-  async removeBusById(busId: string) {
-    try {
-      const bus = await this.Bus.findById(busId).exec();
-      if (!bus)
-        throw new AppError(
-          true,
-          'RessourceNotFoundError',
-          HttpStatusCode.NotFound,
-          'Bus not found'
-        );
-      await bus.remove();
-      return busId;
-    } catch (error) {
-      throw error;
-    }
+  async deleteById(busId: string) {
+    await this.Bus.findByIdAndDelete(busId).exec();
   }
 
   /**
-   * Checks if a bus with the given ID exists.
+   * Checks if a bus with the given ID exists in the database.
    * @param {string} BusId - The ID of the bus to validate.
-   * @returns {Promise<boolean>} - A promise that resolves to true if the bus exists, false otherwise.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the bus exists or not.
    */
   validateBusExists = async (BusId: string) => {
     const busExists = await this.Bus.exists({ _id: BusId });
     return busExists;
   };
 
-  schema = mongooseService.getMongoose().Schema;
+  schema = this.commonService.getMongoose().Schema;
 
   busSchema = new this.schema(
     {
@@ -144,7 +98,7 @@ class BusesDao {
       busModel: { type: String, required: true },
       seats: {
         type: Number,
-        min: [2, 'seats can not be less than 10'],
+        min: [10, 'seats can not be less than 10'],
         max: [50, 'seats can not be more than 50'],
         required: true,
       },
@@ -161,4 +115,3 @@ class BusesDao {
 }
 
 export { BusesDao };
-export default new BusesDao(commonService);

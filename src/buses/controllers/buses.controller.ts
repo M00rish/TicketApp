@@ -1,7 +1,7 @@
 import debug from 'debug';
 import express from 'express';
 
-import busesService, { BusesService } from '../services/buses.service';
+import { BusesService } from '../services/buses.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { inject, injectable } from 'inversify';
@@ -144,4 +144,3 @@ class BusesController {
 }
 
 export { BusesController };
-export default new BusesController(busesService);

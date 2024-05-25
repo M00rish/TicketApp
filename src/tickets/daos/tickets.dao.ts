@@ -2,28 +2,15 @@ import debug from 'debug';
 import shortid from 'shortid';
 
 import { injectable, inject } from 'inversify';
-import mongooseService from '../../common/service/mongoose.service';
-import AppError from '../../common/types/appError';
-import usersDao, { UsersDao } from '../../users/daos/users.dao';
-import tripsDao, { TripsDao } from '../../trips/daos/trips.dao';
-import busesDao, { BusesDao } from '../../buses/daos/buses.dao';
 import { PatchTicketDto } from '../dtos/patch.ticket.dto';
 import { CreateTicketDto } from '../dtos/create.ticket.dto';
-import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
-import commonService, {
-  CommonService,
-} from '../../common/service/common.service';
+import { CommonService } from '../../common/service/common.service';
 import { TYPES } from '../../ioc/types';
 
 const log: debug.IDebugger = debug('app:trips-dao');
 
 class TicketsDao {
-  constructor(
-    private commonService: CommonService,
-    private usersDao: UsersDao,
-    private tripsDao: TripsDao,
-    private busesDao: BusesDao
-  ) {
+  constructor(private commonService: CommonService) {
     log('Created new instance of TicketsDao');
 
     this.Ticket = this.commonService.getOrCreateModel(
@@ -32,198 +19,90 @@ class TicketsDao {
     );
   }
 
-  async createTicket(ressource: any) {
-    try {
-      const { seatNumber, tripId, userId } = ressource;
-
-      if (!seatNumber || !tripId || !userId) {
-        throw new AppError(
-          true,
-          'InvalidInputError',
-          HttpStatusCode.BadRequest,
-          'Invalid input provided'
-        );
-      }
-
-      const [user, trip] = await Promise.all([
-        this.usersDao.getUserById(userId),
-        this.tripsDao.getById(tripId),
-      ]);
-
-      if (!user || !trip) {
-        throw new AppError(
-          true,
-          'ResourceNotFoundError',
-          HttpStatusCode.NotFound,
-          'User or trip not found'
-        );
-      }
-
-      if (trip.departureTime < new Date()) {
-        throw new AppError(
-          true,
-          'TripTimeExpiredError',
-          HttpStatusCode.BadRequest,
-          'Trip has started already'
-        );
-      }
-
-      await this.validateSeatNumber(seatNumber, trip);
-
-      const ticketId = shortid.generate();
-      const ticketData: CreateTicketDto = {
-        //@ts-ignore
-        userId: user._id,
-        tripId: trip._id,
-        seatNumber: seatNumber,
-        price: trip.price,
-      };
-
-      const ticket = new this.Ticket({
-        _id: ticketId,
-        ...ticketData,
-      });
-
-      await ticket.save();
-      await this.tripsDao.updateBookedSeats(tripId, seatNumber);
-
-      return ticketId;
-    } catch (error) {
-      throw error;
-    }
+  /**
+   * Creates a new ticket.
+   * @param ticketData - The data for the ticket.
+   * @returns The ID of the created ticket.
+   */
+  async create(ticketData: CreateTicketDto) {
+    const ticketId = shortid.generate();
+    const ticket = new this.Ticket({
+      _id: ticketId,
+      ...ticketData,
+    });
+    await ticket.save();
+    return ticketId;
   }
 
-  async getTicketById(ticketId: string) {
-    try {
-      const ticket = await this.Ticket.findById({ _id: ticketId }).exec();
-      if (!ticket) {
-        throw new AppError(
-          true,
-          'RessourceNotFoundError',
-          HttpStatusCode.BadRequest,
-          'Ticket not found'
-        );
-      }
-
-      return ticket;
-    } catch (error) {
-      throw error;
-    }
+  /**
+   * Retrieves a ticket by its ID.
+   * @param ticketId - The ID of the ticket to retrieve.
+   * @returns A promise that resolves to the ticket object.
+   */
+  async getById(ticketId: string) {
+    return await this.Ticket.findById({ _id: ticketId }).exec();
   }
 
-  async getTickets(limit = 25, page = 0) {
-    try {
-      return await this.Ticket.find()
-        .limit(limit)
-        .skip(limit * page)
-        .exec();
-    } catch (error) {
-      throw error;
-    }
+  /**
+   * Retrieves a list of tickets.
+   *
+   * @param limit - The maximum number of tickets to retrieve. Default is 25.
+   * @param page - The page number of the results. Default is 0.
+   * @returns A promise that resolves to an array of tickets.
+   */
+  async list(limit = 25, page = 0) {
+    return await this.Ticket.find()
+      .limit(limit)
+      .skip(limit * page)
+      .exec();
   }
 
-  async updateTicketById(ticketId: string, ticketFields: PatchTicketDto) {
-    try {
-      if (!ticketFields.status)
-        throw new AppError(
-          true,
-          'updateTicketError',
-          HttpStatusCode.BadRequest,
-          'status is required'
-        );
-
-      const ticket = await this.Ticket.findById({ _id: ticketId }).exec();
-      if (!ticket) {
-        throw new AppError(true, 'updateTicketError', 404, 'Ticket not found');
-      }
-
-      const updatedTicket = await this.Ticket.findOneAndUpdate(
-        { _id: ticketId },
-        { status: ticketFields.status },
-        { new: true, runValidators: true }
-      ).exec();
-
-      if (!updatedTicket) {
-        throw new AppError(
-          false,
-          'updateTicketError',
-          HttpStatusCode.InternalServerError,
-          'Failed to update ticket'
-        );
-      }
-
-      return updatedTicket._id;
-    } catch (error) {
-      throw error;
-    }
+  /**
+   * Updates a ticket by its ID.
+   * @param {string} ticketId - The ID of the ticket to update.
+   * @param {PatchTicketDto} ticketFields - The fields to update in the ticket.
+   * @returns {Promise<Ticket>} - A promise that resolves to the updated ticket.
+   */
+  async updateById(ticketId: string, ticketFields: PatchTicketDto) {
+    return await this.Ticket.findOneAndUpdate(
+      { _id: ticketId },
+      { status: ticketFields.status },
+      { new: true, runValidators: true }
+    ).exec();
   }
 
-  async deleteTicketById(ticketId: string) {
-    try {
-      const ticket = await this.Ticket.findById({ _id: ticketId }).exec();
-      if (!ticket) {
-        throw new AppError(
-          true,
-          'RessourceNotFoundError',
-          HttpStatusCode.NotFound,
-          'Ticket not found'
-        );
-      }
-
-      await this.Ticket.deleteOne({
-        _id: ticketId,
-      }).exec();
-      await this.tripsDao.removeBookedSeat(ticket.tripId, ticket.seatNumber);
-    } catch (error) {
-      throw error;
-    }
+  /**
+   * Deletes a ticket by its ID.
+   * @param {string} ticketId - The ID of the ticket to delete.
+   * @returns {Promise<void>} - A promise that resolves when the ticket is deleted.
+   */
+  async deleteById(ticketId: string) {
+    await this.Ticket.deleteOne({
+      _id: ticketId,
+    }).exec();
   }
 
+  /**
+   * Deletes tickets by trip ID.
+   * @param tripId - The ID of the trip.
+   * @returns A promise that resolves when the tickets are deleted.
+   */
   async deleteTicketsByTripId(tripId: string) {
-    try {
-      await this.Ticket.deleteMany({ tripId: tripId }).exec();
-    } catch (error) {
-      throw error;
-    }
+    await this.Ticket.deleteMany({ tripId: tripId }).exec();
   }
 
+  /**
+   * Deletes all tickets from the database.
+   */
   async deleteAllTickets() {
-    try {
-      await this.Ticket.deleteMany({}).exec();
-      this.tripsDao.resetBookedSeatsForAllTrips();
-    } catch (error) {
-      throw error;
-    }
+    await this.Ticket.deleteMany({}).exec();
   }
 
-  async validateSeatNumber(seatNumber: number, trip) {
-    const bus = await this.busesDao.getBusById(trip.busId);
-    if (seatNumber > bus.seats || seatNumber < 1) {
-      throw new AppError(
-        true,
-        'InvalidSeatNumberError',
-        HttpStatusCode.BadRequest,
-        'Invalid seat number'
-      );
-    }
-    if (trip.bookedSeats.length === bus.seats) {
-      throw new AppError(
-        true,
-        'NoSeatsError',
-        HttpStatusCode.BadRequest,
-        'No seats left'
-      );
-    }
-    if (trip.bookedSeats.includes(seatNumber)) {
-      throw new AppError(
-        true,
-        'SeatAlreadyBookedError',
-        HttpStatusCode.BadRequest,
-        'Seat already booked'
-      );
-    }
-  }
-
+  /**
+   * Updates the status of all tickets associated with a given trip.
+   * @param tripId - The ID of the trip.
+   * @returns A promise that resolves when all tickets have been updated.
+   */
   async updateTicketStatusByTrip(tripId: string) {
     const tickets = await this.Ticket.find({
       tripId: tripId,
@@ -240,7 +119,7 @@ class TicketsDao {
     );
   }
 
-  schema = mongooseService.getMongoose().Schema;
+  schema = this.commonService.getMongoose().Schema;
 
   ticketSchema = new this.schema(
     {
@@ -271,4 +150,3 @@ class TicketsDao {
 }
 
 export { TicketsDao };
-export default new TicketsDao(commonService, usersDao, tripsDao, busesDao);

@@ -1,7 +1,7 @@
 import debug from 'debug';
 import express from 'express';
 
-import citiesService, { CitiesService } from '../services/cities.service';
+import { CitiesService } from '../services/cities.service';
 import AppError from '../../common/types/appError';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { inject, injectable } from 'inversify';
@@ -126,4 +126,3 @@ class CitiesController {
 }
 
 export { CitiesController };
-export default new CitiesController(citiesService);

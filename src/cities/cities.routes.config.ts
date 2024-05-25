@@ -3,10 +3,10 @@ import { body } from 'express-validator';
 
 import { CommonRoutesConfig } from '../common/common.routes.config';
 import jwtMiddleware from '../auth/middleware/jwt.middleware';
-import { imageUpdateMiddleware } from '../common/middlewares/image.update.middleware';
+import imageUpdateMiddleware from '../common/middlewares/image.update.middleware';
 import permissionMiddleware from '../common/middlewares/common.permission.middleware';
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
-import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
+import bodyValidationMiddleware from '../common/middlewares/body.validation.middleware';
 import citiesController from './controllers/cities.controller';
 
 export class CitiesRoutes extends CommonRoutesConfig {
@@ -21,9 +21,11 @@ export class CitiesRoutes extends CommonRoutesConfig {
 
     this.jwtMiddleware = jwtMiddleware;
     this.permissionMiddleware = permissionMiddleware;
-    this.bodyValidationMiddleware = BodyValidationMiddleware;
+    this.bodyValidationMiddleware = bodyValidationMiddleware;
     this.imageUpdateMiddleware = imageUpdateMiddleware;
     this.citiesController = citiesController;
+
+    this.configureRoutes();
   }
 
   configureRoutes() {

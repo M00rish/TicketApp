@@ -99,5 +99,4 @@ class ErrorHandler {
   };
 }
 
-export default new ErrorHandler();
 export { ErrorHandler };

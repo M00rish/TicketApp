@@ -6,7 +6,7 @@ import permissionMiddleware from '../common/middlewares/common.permission.middle
 import { permissionsFlags } from '../common/enums/common.permissionflag.enum';
 import jwtMiddleware from '../auth/middleware/jwt.middleware';
 import reviewsController from './controllers/reviews.controllers';
-import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
+import bodyValidationMiddleware from '../common/middlewares/body.validation.middleware';
 
 export class ReviewsRoutes extends CommonRoutesConfig {
   private jwtMiddleware;
@@ -19,8 +19,10 @@ export class ReviewsRoutes extends CommonRoutesConfig {
 
     this.jwtMiddleware = jwtMiddleware;
     this.reviewsController = reviewsController;
-    this.bodyValidationMiddleware = BodyValidationMiddleware;
+    this.bodyValidationMiddleware = bodyValidationMiddleware;
     this.permissionMiddleware = permissionMiddleware;
+
+    this.configureRoutes();
   }
 
   configureRoutes(): express.Application {

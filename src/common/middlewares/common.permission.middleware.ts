@@ -3,9 +3,7 @@ import { permissionsFlags } from '../enums/common.permissionflag.enum';
 import debug from 'debug';
 import AppError from '../types/appError';
 import HttpStatusCode from '../enums/HttpStatusCode.enum';
-import reviewsService, {
-  ReviewsService,
-} from '../../reviews/services/reviews.service';
+import { ReviewsService } from '../../reviews/services/reviews.service';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../ioc/types';
 
@@ -125,4 +123,3 @@ class PermissionMiddleware {
 }
 
 export { PermissionMiddleware };
-export default new PermissionMiddleware(reviewsService);

@@ -1,5 +1,5 @@
 import { Schema } from 'mongoose';
-import mongooseService, { MongooseService } from '../service/mongoose.service';
+import { MongooseService } from '../service/mongoose.service';
 
 import debug from 'debug';
 import { inject, injectable } from 'inversify';
@@ -27,7 +27,10 @@ class CommonService {
     }
     return model;
   }
+
+  getMongoose() {
+    return this.mongooseService.getMongoose();
+  }
 }
 
 export { CommonService };
-export default new CommonService(mongooseService);

@@ -1,7 +1,7 @@
 import express from 'express';
 import { body } from 'express-validator';
 
-import { BodyValidationMiddleware } from '../common/middlewares/body.validation.middleware';
+import bodyValidationMiddleware from '../common/middlewares/body.validation.middleware';
 import { CommonRoutesConfig } from '../common/common.routes.config';
 import { TYPES } from '../ioc/types';
 import authMiddlware from './middleware/auth.middleware';
@@ -20,7 +20,9 @@ export class AuthRoutes extends CommonRoutesConfig {
     this.authMiddleware = authMiddlware;
     this.authController = authController;
     this.jwtMiddleware = jwtMiddleware;
-    this.bodyValidationMiddleware = BodyValidationMiddleware;
+    this.bodyValidationMiddleware = bodyValidationMiddleware;
+
+    this.configureRoutes();
   }
 
   configureRoutes(): express.Application {

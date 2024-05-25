@@ -2,7 +2,7 @@ import express from 'express';
 import debug from 'debug';
 import bcrypt from 'bcryptjs';
 
-import usersService, { UsersService } from '../services/users.service';
+import { UsersService } from '../services/users.service';
 import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../ioc/types';
@@ -176,4 +176,3 @@ class UsersController {
 }
 
 export { UsersController };
-export default new UsersController(usersService);

@@ -81,14 +81,14 @@ export class UsersRoutes extends CommonRoutesConfig {
         ]),
         this.usersMiddleware.validateSameEmailDoesntExist,
         this.usersController.createUser
-      )
-      .delete(
-        this.jwtMiddleware.checkValidToken,
-        this.permissionMiddleware.permissionsFlagsRequired(
-          permissionsFlags.ADMIN
-        ),
-        this.usersController.deleteAllUsers
       );
+    // .delete(
+    //   this.jwtMiddleware.checkValidToken,
+    //   this.permissionMiddleware.permissionsFlagsRequired(
+    //     permissionsFlags.ADMIN
+    //   ),
+    //   this.usersController.deleteAllUsers
+    // );
 
     this.app.param(`userId`, this.usersMiddleware.extractUserId);
 

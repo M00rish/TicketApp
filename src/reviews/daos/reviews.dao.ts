@@ -1,12 +1,10 @@
 import debug from 'debug';
 
-import mongooseService from '../../common/service/mongoose.service';
+import { MongooseService } from '../../common/service/mongoose.service';
 import shortid from 'shortid';
-import tripsDao, { TripsDao } from '../../trips/daos/trips.dao';
-import usersDao, { UsersDao } from '../../users/daos/users.dao';
-import commonService, {
-  CommonService,
-} from '../../common/service/common.service';
+import { TripsDao } from '../../trips/daos/trips.dao';
+import { UsersDao } from '../../users/daos/users.dao';
+import { CommonService } from '../../common/service/common.service';
 
 import { CreateReviewDto } from '../dtos/create.review.dto';
 import { PatchReviewDto } from '../dtos/patch.review.dto';
@@ -16,11 +14,7 @@ import HttpStatusCode from '../../common/enums/HttpStatusCode.enum';
 const log: debug.IDebugger = debug('app:reviews-dao');
 
 class ReviewsDao {
-  constructor(
-    private tripsDao: TripsDao,
-    private commonService: CommonService,
-    private usersDao: UsersDao
-  ) {
+  constructor(private commonService: CommonService) {
     log('Created new instance of ReviewsDao');
     this.Review = this.commonService.getOrCreateModel(
       'Review',
@@ -28,212 +22,121 @@ class ReviewsDao {
     );
   }
 
-  async addReview(reviewFields: CreateReviewDto) {
-    try {
-      const reviewId = shortid.generate();
-      const review = new this.Review({
-        _id: reviewId,
-        ...reviewFields,
-      });
+  /**
+   * Creates a new review.
+   * @param reviewFields - The fields of the review to be created.
+   * @returns The ID of the created review.
+   */
+  async create(reviewFields: CreateReviewDto) {
+    const reviewId = shortid.generate();
+    const review = new this.Review({
+      _id: reviewId,
+      ...reviewFields,
+    });
 
-      await review.save();
-      this.updateTripRating(review.tripId);
-      return reviewId;
-    } catch (error: any) {
-      const err = new AppError(
-        false,
-        'addReview_Error',
-        HttpStatusCode.InternalServerError,
-        error.message
-      );
-      throw err;
-    }
+    await review.save();
+    return reviewId;
   }
 
+  /**
+   * Retrieves reviews by trip ID.
+   * @param tripId - The ID of the trip.
+   * @returns A promise that resolves to an array of reviews.
+   */
   async getReviewsByTripId(tripId: string) {
-    try {
-      const reviews = await this.Review.find({ tripId: tripId }).exec();
-      if (!reviews)
-        throw new AppError(
-          true,
-          'getReviewsByTripId_Error',
-          HttpStatusCode.NotFound,
-          'No Reviews found for this trip'
-        );
-      return reviews;
-    } catch (error) {
-      throw error;
-    }
+    return await this.Review.find({ tripId: tripId }).exec();
   }
 
+  /**
+   * Retrieves reviews by user ID.
+   * @param {string} userId - The ID of the user.
+   * @returns {Promise<Review[]>} - A promise that resolves to an array of reviews.
+   */
   async getReviewsByUserId(userId: string) {
-    try {
-      const reviews = await this.Review.find({ userId: userId }).exec();
-      if (!reviews)
-        throw new AppError(
-          true,
-          'getReviewsByUserId_Error',
-          HttpStatusCode.NotFound,
-          'No Reviews found for this user'
-        );
-      return reviews;
-    } catch (error) {
-      throw error;
-    }
+    return await this.Review.find({ userId: userId }).exec();
   }
 
-  async getReviewById(reviewId: string) {
-    try {
-      const review = await this.Review.findOne({ _id: reviewId }).exec();
-      if (!review)
-        throw new AppError(
-          true,
-          'getReviewsByUserId_Error',
-          HttpStatusCode.NotFound,
-          'Review not found'
-        );
-      return review;
-    } catch (error) {
-      throw error;
-    }
+  /**
+   * Retrieves a review by its ID.
+   * @param reviewId - The ID of the review to retrieve.
+   * @returns A promise that resolves to the review object.
+   */
+  async getById(reviewId: string) {
+    return await this.Review.findOne({ _id: reviewId }).exec();
   }
 
-  async removeReviewById(reviewId: string) {
-    try {
-      const review = await this.Review.findOne({ _id: reviewId }).exec();
-      if (!review)
-        throw new AppError(
-          true,
-          'getReviewsByUserId_Error',
-          HttpStatusCode.NotFound,
-          'Review not found'
-        );
-
-      await review.remove();
-      this.updateTripRating(review.tripId);
-    } catch (error) {
-      throw error;
-    }
+  /**
+   * Deletes a review by its ID.
+   * @param {string} reviewId - The ID of the review to delete.
+   * @returns {Promise<void>} - A promise that resolves when the review is deleted.
+   */
+  async deleteById(reviewId: string) {
+    await this.Review.findByIdAndDelete(reviewId).exec();
   }
 
-  async removeReviewsByTripId(tripId: string) {
-    try {
-      const Reviews = await this.Review.find({ tripId: tripId }).exec();
-
-      if (!Reviews || Reviews.length === 0)
-        throw new AppError(
-          true,
-          'getReviewsByUserId_Error',
-          HttpStatusCode.NotFound,
-          'No Reviews found for this trip'
-        );
-
-      await Promise.all(
-        Reviews.map(async (review) => {
-          await this.Review.findByIdAndDelete(review._id).exec();
-        })
-      );
-      this.updateTripRating(tripId);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async removeReviewsByUserId(userId: string) {
-    try {
-      const deletedReviews = await this.Review.find({ userId: userId })
-        .select('_id tripId')
-        .exec();
-
-      if (!deletedReviews || deletedReviews.length === 0)
-        throw new AppError(
-          true,
-          'getReviewsByUserId_Error',
-          HttpStatusCode.NotFound,
-          'No Reviews found for this user'
-        );
-
-      const tripIdsToUpdate = [
-        ...new Set(deletedReviews.map((review) => review.tripId)),
-      ];
-
-      await this.Review.deleteMany({ userId: userId }).exec();
-
-      for (const tripId of tripIdsToUpdate) {
-        await this.updateTripRating(tripId as string); //TODO: to come back to this
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async updateReviewById(reviewId: string, reviewFields: PatchReviewDto) {
-    try {
-      const review = await this.Review.findOneAndUpdate(
-        { _id: reviewId },
-        { $set: reviewFields },
-        { new: true }
-      ).exec();
-      if (!review)
-        throw new AppError(
-          true,
-          'getReviewsByUserId_Error',
-          HttpStatusCode.NotFound,
-          'Review not found'
-        );
-
-      this.updateTripRating(review.tripId);
-      return review._id;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async listReviews(limit = 25, page = 0) {
-    try {
-      const reviews = await this.Review.find()
-        .limit(limit)
-        .skip(limit * page)
-        .exec();
-      return reviews;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // TODO: move to trips
-  async updateTripRating(tripId: string) {
-    const reviews = await this.Review.find({ tripId: tripId }).exec();
-    if (reviews.length === 0) {
-      await this.tripsDao.Trip.findOneAndUpdate(
-        { _id: tripId },
-        { $set: { ratings: 0 } },
-        { new: true }
-      ).exec();
-      return;
-    }
-    const ratingSum = reviews.reduce((acc, review) => acc + review.ratings, 0);
-    const ratingAvg = (ratingSum / reviews.length).toFixed(1);
-
-    await this.tripsDao.Trip.findOneAndUpdate(
-      { _id: tripId },
-      { $set: { ratings: ratingAvg } },
+  /**
+   * Updates a review by its ID.
+   * @param {string} reviewId - The ID of the review to update.
+   * @param {PatchReviewDto} reviewFields - The fields to update in the review.
+   * @returns {Promise<void>} - A promise that resolves when the update is complete.
+   */
+  async updateById(reviewId: string, reviewFields: PatchReviewDto) {
+    await this.Review.findOneAndUpdate(
+      { _id: reviewId },
+      { $set: reviewFields },
       { new: true }
     ).exec();
   }
-  schema = mongooseService.getMongoose().Schema;
+
+  /**
+   * Retrieves a list of reviews.
+   * @param limit - The maximum number of reviews to retrieve. Default is 25.
+   * @param page - The page number of reviews to retrieve. Default is 0.
+   * @returns A promise that resolves to an array of reviews.
+   */
+  async list(limit = 25, page = 0) {
+    return await this.Review.find()
+      .limit(limit)
+      .skip(limit * page)
+      .exec();
+  }
+
+  /**
+   * Removes reviews by trip ID.
+   * @param {string} tripId - The ID of the trip.
+   * @param {Array} reviews - The array of reviews to be removed.
+   * @returns {Promise<void>} - A promise that resolves when all reviews are removed.
+   */
+  async removeReviewsByTripId(tripId: string, reviews) {
+    await Promise.all(
+      reviews.map(async (review) => {
+        await this.Review.findByIdAndDelete(review._id).exec();
+      })
+    );
+  }
+
+  /**
+   * Deletes reviews by user ID.
+   * @param {string} userId - The ID of the user whose reviews should be deleted.
+   * @returns {Promise<void>} - A promise that resolves when the reviews are deleted.
+   */
+  async deleteReviewsByUserId(userId: string) {
+    await this.Review.deleteMany({ userId: userId }).exec();
+  }
+
+  schema = this.commonService.getMongoose().Schema;
 
   reviewSchema = new this.schema(
     {
       _id: { type: this.schema.Types.String },
       tripId: {
         type: this.schema.Types.String,
-        ref: this.tripsDao.Trip,
+        ref: this.commonService.getOrCreateModel('Trip'),
         required: true,
       },
       userId: {
         type: this.schema.Types.String,
-        ref: this.usersDao.User,
+        ref: this.commonService.getOrCreateModel('User'),
         required: true,
       },
       reviewText: { type: String, required: true },
@@ -263,4 +166,3 @@ class ReviewsDao {
 }
 
 export { ReviewsDao };
-export default new ReviewsDao(tripsDao, commonService, usersDao);
