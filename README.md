@@ -1,1 +1,1 @@
-APP for managing trips 🚎
+APP for Bus Stations
