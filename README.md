@@ -35,4 +35,3 @@
   - Cities Management
 - **Permission-based Access Control**
 
-[Rest of the README content remains the same...]
